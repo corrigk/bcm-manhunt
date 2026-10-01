@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d10">
-<title>Manhunt Scoreboard</title>
+<title>Manhunt Purdue</title>
 <style>
 :root{
   --bg:#0b0d10; --panel:#14181d; --panel2:#1b2027; --line:#2a313a;
@@ -13,24 +13,20 @@
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
-header{padding:14px 16px 10px;border-bottom:1px solid var(--line);background:linear-gradient(#10141a,#0b0d10)}
-.title{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-h1{margin:0;font-size:20px;letter-spacing:.14em;text-transform:uppercase}
-h1 span{color:var(--accent)}
+header{padding:10px 16px;border-bottom:1px solid var(--line);background:#0d1014;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:15px}
+.brand span{color:var(--accent)}
+.hclock{font:600 15px var(--mono);color:var(--mute)}
 .badge{font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--mute)}
 .badge.live{color:var(--good);border-color:var(--good)}
 .badge.view{color:var(--warn);border-color:var(--warn)}
-.clock{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
-.time{font:600 34px/1 var(--mono);letter-spacing:.02em}
-.phase{text-align:right;font-size:13px;color:var(--mute)}
-.phase b{display:block;color:var(--text);font-size:15px}
-.banner{margin:10px 16px 0;padding:10px 12px;border-radius:10px;font-size:14px;border:1px solid var(--warn);color:var(--warn);background:#2a1f05}
+.banner{margin:10px 16px 0;padding:10px 12px;border-radius:10px;font-size:14px;border:1px solid var(--warn);color:var(--warn);background:#2a1f05;text-align:center}
 .banner.red{border-color:var(--bad);color:var(--bad);background:#2a0d0d}
 .banner[hidden]{display:none}
-nav{display:flex;position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
-nav button{flex:1;padding:12px 4px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);font:600 14px inherit;font-family:inherit;cursor:pointer}
+nav{display:flex;position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{flex:1;min-width:max-content;padding:12px 12px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);font:600 14px inherit;font-family:inherit;cursor:pointer}
 nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
 main{padding:14px 16px 40px;max-width:860px;margin:0 auto}
 section[hidden]{display:none}
@@ -55,12 +51,12 @@ td.n,th.n{text-align:right;font-family:var(--mono)}
 .lbtn.disp{border-color:var(--warn);background:#2a1f05}
 .lbtn:disabled{opacity:.6;cursor:default}
 .arr{margin-top:8px}
-.btn{display:inline-block;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:10px 14px;font:600 15px inherit;font-family:inherit;cursor:pointer;min-height:44px}
+.btn{display:inline-block;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:10px 14px;font:600 15px inherit;font-family:inherit;cursor:pointer;min-height:44px;text-decoration:none;text-align:center}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
 .btn.full{width:100%}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-input[type=text],input[type=number],input[type=time],textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:16px inherit;font-family:inherit;width:100%}
+input[type=text],input[type=password],input[type=number],input[type=time],textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:16px inherit;font-family:inherit;width:100%}
 input[type=time]{font-family:var(--mono);font-size:20px}
 textarea{font-family:var(--mono);font-size:12px;min-height:90px}
 label{display:block;font-size:13px;color:var(--mute);margin:8px 0 4px}
@@ -76,7 +72,57 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 .curve{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:6px}
 .curve div{background:var(--panel2);border-radius:8px;padding:6px 8px;font-size:13px}
 .curve b{font-family:var(--mono);display:block}
-#cd{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(circle at 50% 40%,#1c2230,#07090c 70%);transition:background .1s}
+.subnav{display:flex;gap:8px;margin-bottom:12px}
+.subnav .btn{flex:1}
+.subnav .btn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;z-index:60}
+.toast[hidden]{display:none}
+
+/* ---------- Landing hero ---------- */
+.hero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;padding:34px 16px 28px;text-align:center;
+  background:
+    linear-gradient(rgba(230,168,23,.05) 1px,transparent 1px) 0 0/36px 36px,
+    linear-gradient(90deg,rgba(230,168,23,.05) 1px,transparent 1px) 0 0/36px 36px,
+    radial-gradient(ellipse at 50% 0%,#2a2208 0%,#0d1014 65%);}
+.radar{position:absolute;left:50%;top:50%;width:min(130vw,820px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;opacity:.55;
+  background:
+    repeating-radial-gradient(circle,transparent 0 58px,rgba(230,168,23,.13) 59px 60px);}
+.radar::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(62,207,142,0) 0deg,rgba(62,207,142,.0) 270deg,rgba(62,207,142,.28) 359deg,rgba(62,207,142,0) 360deg);
+  animation:sweep 5s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+.hero>*:not(.radar){position:relative}
+.eyebrow{letter-spacing:.35em;text-transform:uppercase;font-size:12px;color:var(--mute)}
+.mega{margin:8px 0 4px;font-size:clamp(46px,15vw,104px);line-height:.95;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.mega span{color:var(--accent);text-shadow:0 0 28px rgba(230,168,23,.55)}
+.tag{color:var(--mute);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.heroLabel{margin:26px 0 10px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;font-size:13px;color:var(--accent)}
+.digits{display:flex;justify-content:center;gap:clamp(6px,2vw,14px)}
+.digits div{background:rgba(0,0,0,.55);border:1px solid var(--line);border-radius:14px;padding:12px 4px 8px;width:clamp(76px,26vw,160px);box-shadow:0 0 30px rgba(230,168,23,.08) inset}
+.digits b{display:block;font:800 clamp(40px,13vw,92px)/1 var(--mono);font-variant-numeric:tabular-nums}
+.digits small{display:block;color:var(--mute);letter-spacing:.2em;text-transform:uppercase;font-size:11px;margin-top:6px}
+.digits.hot b{color:var(--bad);animation:throb 1s infinite}
+@keyframes throb{50%{opacity:.55}}
+.heroSub{margin:18px auto 0;max-width:34ch;color:var(--text)}
+.scrollbtn{margin-top:22px}
+.mapsec{margin-top:26px}
+.mapsec h2{margin:0 0 4px;letter-spacing:.08em;text-transform:uppercase;font-size:20px}
+.mapsec h2 span{color:var(--accent)}
+.mapfig{margin:14px 0 0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.mapfig img{display:block;width:100%;height:auto}
+.mapfall{display:none;padding:14px}
+.quads{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.quad{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:10px 12px}
+.quad b{display:block;letter-spacing:.06em;text-transform:uppercase;font-size:13px}
+.quad span{color:var(--mute);font-size:13px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.fact{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.fact b{display:block;font:800 22px var(--mono);color:var(--accent)}
+.fact span{color:var(--mute);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.drop.due{border-color:var(--warn);animation:throb .8s infinite}
+
+/* ---------- Final 10 seconds overlay ---------- */
+#cd{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(circle at 50% 40%,#1c2230,#07090c 70%)}
 #cd[hidden]{display:none}
 #cd .lbl{letter-spacing:.3em;text-transform:uppercase;color:var(--mute);font-size:14px}
 #cd .num{font:800 clamp(64px,22vw,200px)/1 var(--mono);color:var(--accent);margin:12px 0;font-variant-numeric:tabular-nums}
@@ -91,36 +137,79 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 #cd.go .num{font-size:clamp(120px,48vw,380px);color:#fff;text-shadow:0 0 40px var(--good);animation:pop .8s ease-out}
 @keyframes pop{0%{transform:scale(2.4);opacity:0}25%{opacity:1}100%{transform:scale(1)}}
 @keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(-5px,4px)}50%{transform:translate(5px,-4px)}75%{transform:translate(-4px,-5px)}100%{transform:translate(4px,5px)}}
-@media (prefers-reduced-motion:reduce){#cd.crazy{animation:none}#cd.crazy .num.pop,#cd.go .num{animation:none}}
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;z-index:20}
-.toast[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#cd.crazy{animation:none}#cd.crazy .num.pop,#cd.go .num{animation:none}.radar::after{animation:none}.digits.hot b,.drop.due{animation:none}html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <header>
-  <div class="title">
-    <h1>Manhunt <span>Purdue</span></h1>
-    <span class="badge" id="modeBadge">Scorekeeper</span>
-  </div>
-  <div class="clock">
-    <div class="time" id="clock">--:--:--</div>
-    <div class="phase"><b id="phase">&nbsp;</b><span id="phaseSub">&nbsp;</span></div>
-  </div>
+  <div class="brand">Manhunt <span>Purdue</span></div>
+  <div class="hclock" id="clock">--:--:--</div>
+  <span class="badge" id="modeBadge">Spectator</span>
 </header>
 <div class="banner" id="photoBanner" hidden></div>
 <div class="banner red" id="returnBanner" hidden></div>
 
 <nav role="tablist">
-  <button role="tab" data-tab="board" aria-selected="true">Scoreboard</button>
-  <button role="tab" data-tab="log" aria-selected="false">Log</button>
+  <button role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button role="tab" data-tab="board" aria-selected="false">Scores</button>
   <button role="tab" data-tab="rules" aria-selected="false">Rules</button>
-  <button role="tab" data-tab="setup" aria-selected="false">Setup</button>
+  <button role="tab" data-tab="leaders" aria-selected="false">Leaders</button>
+  <button role="tab" data-tab="keeper" aria-selected="false">🔒 Scorekeeper</button>
 </nav>
 
 <main>
-  <section id="tab-board"><div id="board"></div></section>
-  <section id="tab-log" hidden><div id="logList"></div></section>
+  <!-- HOME -->
+  <section id="tab-home">
+    <div class="hero">
+      <div class="radar"></div>
+      <div class="eyebrow">Purdue University · Newman Hall</div>
+      <h1 class="mega">MAN<span>HUNT</span></h1>
+      <div class="tag">4 leaders · 92 acres · 75 minutes</div>
+      <div class="heroLabel" id="heroLabel">&nbsp;</div>
+      <div class="digits" id="heroDigits">
+        <div><b id="hH">00</b><small>hours</small></div>
+        <div><b id="hM">00</b><small>minutes</small></div>
+        <div><b id="hS">00</b><small>seconds</small></div>
+      </div>
+      <div class="heroSub" id="heroSub">&nbsp;</div>
+      <button class="btn scrollbtn" id="toMap">▼ See where the leaders are hiding</button>
+    </div>
 
+    <div class="mapsec" id="mapsec">
+      <h2>The <span>hunting grounds</span></h2>
+      <div class="sub">Four leaders. One quadrant each. Your whole team stays in one quadrant at a time.</div>
+      <figure class="mapfig">
+        <img id="mapImg" src="quadrants.jpg" alt="Satellite map of the game area divided into four quadrants, with a leader in each">
+        <div class="mapfall" id="mapFall">
+          <svg viewBox="0 0 400 480" width="100%" role="img" aria-label="Schematic of the four quadrants">
+            <rect x="10" y="10" width="380" height="460" rx="10" fill="#14181d" stroke="#e6a817" stroke-width="3"/>
+            <line x1="200" y1="10" x2="200" y2="470" stroke="#e6a817" stroke-width="2" stroke-dasharray="8 6"/>
+            <line x1="10" y1="240" x2="390" y2="240" stroke="#e6a817" stroke-width="2" stroke-dasharray="8 6"/>
+            <g fill="#e8ecf0" font-size="22" font-weight="700" text-anchor="middle">
+              <text x="105" y="130">NW</text><text x="295" y="130">NE</text>
+              <text x="105" y="360">SW</text><text x="295" y="360">SE</text>
+            </g>
+          </svg>
+        </div>
+      </figure>
+      <div class="quads" id="quads"></div>
+      <div class="facts">
+        <div class="fact drop" id="dropCard"><b id="dropT">--:--</b><span id="dropL">Next leader photo</span></div>
+        <div class="fact"><b>5 min</b><span>Photo check-ins</span></div>
+        <div class="fact"><b>8:55 PM</b><span>Leaders head home</span></div>
+        <div class="fact"><b>9:00 PM</b><span>Be back at Newman</span></div>
+      </div>
+      <div id="groupmeWrap" style="margin-top:12px" hidden><a class="btn primary full" id="groupmeBtn" target="_blank" rel="noopener">Open the GroupMe for leader photos</a></div>
+    </div>
+  </section>
+
+  <!-- SCORES -->
+  <section id="tab-board" hidden>
+    <div id="boardNote"></div>
+    <div id="board"></div>
+  </section>
+
+  <!-- RULES -->
   <section id="tab-rules" class="rules" hidden>
     <div class="card">
       <h3 style="margin-top:0">The game</h3>
@@ -158,40 +247,76 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
     </div>
   </section>
 
-  <section id="tab-setup" hidden>
-    <div id="setupScorekeeper">
-      <div class="card">
-        <strong>Teams</strong>
-        <p class="sub">Name and head count. Majority needed is shown on the team card.</p>
-        <div id="teamEditor"></div>
-        <div class="row">
-          <button class="btn" id="addTeam">+ Add team</button>
-        </div>
-      </div>
-      <div class="card">
-        <strong>Share live results</strong>
-        <p class="sub">Makes a read-only link with the current standings baked in. Re-copy it for updates. Works from the hosted page, not from a local file.</p>
-        <button class="btn full" id="copyShare">Copy spectator link</button>
-      </div>
-      <div class="card">
-        <strong>Backup</strong>
-        <p class="sub">Data is saved in this browser only. Copy a backup now and then.</p>
-        <div class="row">
-          <button class="btn" id="exportBtn">Copy backup</button>
-          <button class="btn" id="importBtn">Restore from text</button>
-        </div>
-        <label for="backupText">Backup text</label>
-        <textarea id="backupText" placeholder="Paste a backup here to restore"></textarea>
-      </div>
-      <div class="card">
-        <strong>Danger zone</strong>
-        <p class="sub">Clears all captures and arrivals but keeps teams.</p>
-        <button class="btn danger" id="resetScores">Reset all scores</button>
-      </div>
+  <!-- LEADERS -->
+  <section id="tab-leaders" hidden>
+    <div class="card drop" id="leaderDrop" style="text-align:center">
+      <div class="sub" style="letter-spacing:.2em;text-transform:uppercase">Leaders: next photo due in</div>
+      <div style="font:800 64px var(--mono);margin:6px 0" id="ldT">--:--</div>
+      <div id="ldMsg">Post a photo of where you are standing right now. The hunters are watching for it.</div>
+      <div class="sub" style="margin-top:8px">Due at <span id="ldAt">--</span></div>
+      <div id="groupmeWrap2" style="margin-top:12px" hidden><a class="btn primary full" id="groupmeBtn2" target="_blank" rel="noopener">Open GroupMe</a></div>
     </div>
-    <div id="setupViewer" class="card" hidden>
-      <p>You are viewing a read-only snapshot.</p>
+    <div class="card">
+      <strong>Leader reminders</strong>
+      <ul class="sub" style="margin:8px 0 0;padding-left:20px">
+        <li>A photo every 5 minutes. You may keep moving afterward.</li>
+        <li>At 8:55 PM start heading back toward Newman Hall. You are safe once you cross the street in front of St. Thomas Aquinas / Newman.</li>
+        <li>A capture needs a majority of the team within arm's reach. Only give your codeword after you are touched.</li>
+        <li>Text the scorekeeper each time you are captured: team and time.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SCOREKEEPER -->
+  <section id="tab-keeper" hidden>
+    <div id="keeperViewer" class="card" hidden>
+      <p>You are viewing a read-only snapshot of the standings.</p>
       <button class="btn primary" id="exitViewer">Open my own scorekeeper</button>
+    </div>
+    <div id="gate" class="card">
+      <strong>Scorekeeper access</strong>
+      <label for="pw">Password</label>
+      <input type="password" id="pw" autocomplete="off" autocapitalize="off">
+      <div class="err" id="pwErr"></div>
+      <button class="btn primary full" id="pwGo" style="margin-top:8px">Unlock</button>
+    </div>
+    <div id="keeperApp" hidden>
+      <div class="subnav">
+        <button class="btn" data-sub="log" aria-pressed="true">Log captures</button>
+        <button class="btn" data-sub="setup" aria-pressed="false">Setup</button>
+      </div>
+      <div id="sub-log"><div id="logList"></div></div>
+      <div id="sub-setup" hidden>
+        <div class="card">
+          <strong>Teams</strong>
+          <p class="sub">Name and head count. Majority needed is shown on the team card.</p>
+          <div id="teamEditor"></div>
+          <div class="row"><button class="btn" id="addTeam">+ Add team</button></div>
+        </div>
+        <div class="card">
+          <strong>Share live results</strong>
+          <p class="sub">Makes a read-only link with the current standings baked in. Re-copy it for updates. Works from the hosted page, not from a local file.</p>
+          <button class="btn full" id="copyShare">Copy spectator link</button>
+        </div>
+        <div class="card">
+          <strong>Backup</strong>
+          <p class="sub">Data is saved in this browser only. Copy a backup now and then.</p>
+          <div class="row">
+            <button class="btn" id="exportBtn">Copy backup</button>
+            <button class="btn" id="importBtn">Restore from text</button>
+          </div>
+          <label for="backupText">Backup text</label>
+          <textarea id="backupText" placeholder="Paste a backup here to restore"></textarea>
+        </div>
+        <div class="card">
+          <strong>Danger zone</strong>
+          <p class="sub">Clears all captures and arrivals but keeps teams.</p>
+          <div class="row">
+            <button class="btn danger" id="resetScores">Reset all scores</button>
+            <button class="btn" id="lockBtn">Lock scorekeeper</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -212,6 +337,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
     </div>
   </form>
 </dialog>
+
 <div id="cd" hidden>
   <div>
     <div class="lbl" id="cdLbl"></div>
@@ -229,8 +355,18 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 (function(){
 "use strict";
 
-/* ---------- Constants ---------- */
+/* ---------- Config (edit these) ---------- */
 const LEADERS = ["Kevin","Owen","Gabe","Jack"];
+const QUADS = [                       // leader: fill in names once assigned
+  {key:"NW", name:"Northwest", leader:""},
+  {key:"NE", name:"Northeast", leader:""},
+  {key:"SW", name:"Southwest", leader:""},
+  {key:"SE", name:"Southeast", leader:""}
+];
+const GROUPME_URL = "";               // paste the GroupMe invite/share link to show a button
+const KEEPER_HASH = 2917355938830596; // hash of the scorekeeper password
+const DROP_EVERY = 300;               // leader photo every 5 minutes (seconds)
+
 const START = 19*3600 + 45*60;   // 7:45 PM, seconds since midnight
 const RETURN = 20*3600 + 55*60;  // 8:55 PM
 const END = 21*3600;             // 9:00 PM
@@ -313,6 +449,7 @@ function nowSecs(){
   return d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const $ = id => document.getElementById(id);
 
 /* ---------- Rendering ---------- */
 function ranked(){
@@ -323,6 +460,9 @@ function majority(size){ return Math.floor(size/2)+1; }
 
 function renderBoard(){
   const list = ranked();
+  const any = list.some(x=>x.s.count>0);
+  $("boardNote").innerHTML = (!any && !viewer)
+    ? '<div class="card sub">No captures yet. Standings appear here as the hunt goes on.</div>' : "";
   const html = list.map(({t,s},i)=>{
     const dots = LEADERS.map(l=>`<span class="dot ${t.caps[l]&&!t.caps[l].disputed?"on":""}"></span>`).join("");
     const rows = s.rows.map(r=>`<tr><td>${esc(r.leader)}</td><td>${fmtClock(r.at)}</td><td class="n">${fmtDur(r.t)}</td><td class="n pos-c">+${fmtPts(r.pts)}</td></tr>`).join("");
@@ -333,11 +473,10 @@ function renderBoard(){
     const arr = t.arrival!=null ? ` · Newman ${fmtClock(t.arrival)}` : "";
     return `<div class="card"><div class="rank"><div class="pos">${i+1}</div><div class="name">${esc(t.name)}<div class="sub">${s.count}/4 captured · ${esc(prog)}${arr}</div></div><div class="score ${s.total<0?"neg":""}">${fmtPts(s.total)}</div></div><div class="dots">${dots}</div>${detail}</div>`;
   }).join("");
-  document.getElementById("board").innerHTML = html || '<p class="sub">No teams yet. Add some in Setup.</p>';
+  $("board").innerHTML = html || '<p class="sub">No teams yet.</p>';
 }
 
 function renderLog(){
-  const el = document.getElementById("logList");
   const html = ranked().sort((a,b)=>a.t.name.localeCompare(b.t.name,undefined,{numeric:true})).map(({t,s})=>{
     const btns = LEADERS.map(l=>{
       const c = t.caps[l];
@@ -352,100 +491,243 @@ function renderLog(){
       <div class="leaders">${btns}</div>
       <div class="arr"><button class="btn full" data-arrive="${t.id}" ${viewer?"disabled":""}>${arr}</button></div></div>`;
   }).join("");
-  el.innerHTML = html || '<p class="sub">No teams yet.</p>';
+  $("logList").innerHTML = html || '<p class="sub">No teams yet.</p>';
 }
 
 function renderSetup(){
-  document.getElementById("setupScorekeeper").hidden = viewer;
-  document.getElementById("setupViewer").hidden = !viewer;
-  if(viewer) return;
-  document.getElementById("teamEditor").innerHTML = state.teams.map(t=>
+  $("teamEditor").innerHTML = state.teams.map(t=>
     `<div class="teamrow"><input type="text" value="${esc(t.name)}" data-name="${t.id}" aria-label="Team name"><input type="number" min="1" max="30" value="${t.size}" data-size="${t.id}" aria-label="Team size"><button class="btn danger" data-del="${t.id}" aria-label="Remove team">✕</button></div>`
   ).join("");
+}
+
+function renderQuads(){
+  $("quads").innerHTML = QUADS.map(q=>
+    `<div class="quad"><b>${q.name}</b><span>${q.leader ? "Leader: "+esc(q.leader) : "A leader is hiding here"}</span></div>`).join("");
+  if(GROUPME_URL){
+    ["groupmeBtn","groupmeBtn2"].forEach(id=> $(id).href = GROUPME_URL);
+    ["groupmeWrap","groupmeWrap2"].forEach(id=> $(id).hidden = false);
+  }
 }
 
 function renderAll(){ renderBoard(); renderLog(); renderSetup(); }
 
 function renderCurve(){
   const mins = [0,2,5,10,15,20,30,45,60,75];
-  document.getElementById("curve").innerHTML = mins.map(m=>`<div>${m} min<b>${fmtPts(captureScore(m*60))}</b></div>`).join("");
+  $("curve").innerHTML = mins.map(m=>`<div>${m} min<b>${fmtPts(captureScore(m*60))}</b></div>`).join("");
 }
 
-/* ---------- Clock ---------- */
+/* ---------- Tabs ---------- */
+const TABS = ["home","board","rules","leaders","keeper"];
+function showTab(name){
+  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected", x.dataset.tab===name));
+  TABS.forEach(k=> $("tab-"+k).hidden = (k!==name));
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b=> b.onclick = ()=> showTab(b.dataset.tab));
+$("toMap").onclick = ()=> $("mapsec").scrollIntoView({behavior:"smooth", block:"start"});
+
+/* ---------- Scorekeeper gate ---------- */
+function hashStr(str, seed){ // cyrb53: obfuscation only, not security
+  seed = seed||0;
+  let h1 = 0xdeadbeef^seed, h2 = 0x41c6ce57^seed;
+  for(let i=0,ch;i<str.length;i++){ ch = str.charCodeAt(i); h1 = Math.imul(h1^ch,2654435761); h2 = Math.imul(h2^ch,1597334677); }
+  h1 = Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2 = Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return 4294967296*(2097151&h2)+(h1>>>0);
+}
+function isUnlocked(){ try{ return sessionStorage.getItem("mh-keeper")==="1"; }catch(e){ return false; } }
+function setUnlocked(v){ try{ v ? sessionStorage.setItem("mh-keeper","1") : sessionStorage.removeItem("mh-keeper"); }catch(e){} }
+function applyGate(){
+  const un = isUnlocked() && !viewer;
+  $("keeperViewer").hidden = !viewer;
+  $("gate").hidden = viewer || un;
+  $("keeperApp").hidden = !un;
+}
+function tryUnlock(){
+  if(hashStr($("pw").value.trim()) === KEEPER_HASH){
+    setUnlocked(true); $("pw").value = ""; $("pwErr").textContent = ""; applyGate();
+  } else { $("pwErr").textContent = "Wrong password."; }
+}
+$("pwGo").onclick = tryUnlock;
+$("pw").addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
+$("lockBtn").onclick = ()=>{ setUnlocked(false); applyGate(); };
+document.querySelectorAll(".subnav [data-sub]").forEach(b=> b.onclick = ()=>{
+  document.querySelectorAll(".subnav [data-sub]").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  $("sub-log").hidden = b.dataset.sub!=="log"; $("sub-setup").hidden = b.dataset.sub!=="setup";
+});
+
+/* ---------- Header clock + banners ---------- */
+const demo = parseInt(new URLSearchParams(location.search).get("demo"));
+const GO_AT = demo > 0 ? Date.now() + demo*1000 : (()=>{ const d = new Date(); d.setHours(19,45,0,0); return d.getTime(); })();
+const GAME_MS = (END-START)*1000, RETURN_MS = (RETURN-START)*1000;
+
 function tick(){
-  const n = nowSecs();
-  document.getElementById("clock").textContent = fmtClock(n);
-  const ph = document.getElementById("phase"), sub = document.getElementById("phaseSub");
-  const badge = document.getElementById("modeBadge");
-  const photo = document.getElementById("photoBanner"), ret = document.getElementById("returnBanner");
-  let live = false;
-  if(n < START){ ph.textContent = "Starts in "+fmtDur(START-n); sub.textContent = "7:45 PM start"; }
-  else if(n < END){
-    live = true;
-    ph.textContent = fmtDur(END-n)+" left";
-    sub.textContent = n>=RETURN ? "Return to Newman" : "Hunt in progress";
-  } else { ph.textContent = "Game over"; sub.textContent = fmtClock(END)+" ended"; }
-
-  photo.hidden = true;
-  if(live && n < RETURN){
-    const sinceStart = n - START;
-    const toNext = 300 - (sinceStart % 300);
-    if(toNext <= 20 || sinceStart % 300 < 15){
-      photo.hidden = false;
-      photo.textContent = toNext <= 20 ? "Leader photos due in "+toNext+"s" : "Leader photo check-in now";
-    }
-  }
-  ret.hidden = !(live && n >= RETURN);
-  if(!ret.hidden) ret.textContent = "Leaders heading to Newman. Teams: be back by 9:00 PM. "+fmtDur(END-n)+" left.";
-
-  if(viewer){ badge.textContent = "Spectator"; badge.className = "badge view"; }
+  $("clock").textContent = fmtClock(nowSecs());
+  const badge = $("modeBadge");
+  const el = Date.now() - GO_AT;                       // ms since start
+  const live = el >= 0 && el < GAME_MS;
+  if(viewer){ badge.textContent = "Snapshot"; badge.className = "badge view"; }
   else if(live){ badge.textContent = "Live"; badge.className = "badge live"; }
-  else { badge.textContent = "Scorekeeper"; badge.className = "badge"; }
+  else { badge.textContent = el < 0 ? "Pre-game" : "Final"; badge.className = "badge"; }
+
+  const photo = $("photoBanner"), ret = $("returnBanner");
+  photo.hidden = true;
+  if(live && el < RETURN_MS + 1000){
+    const into = (el/1000) % DROP_EVERY;
+    const toNext = Math.ceil(DROP_EVERY - into);
+    if(toNext <= 20 && el >= 0){ photo.hidden = false; photo.textContent = "Leader photos drop in "+toNext+"s"; }
+    else if(into < 20 && el >= 5000){ photo.hidden = false; photo.textContent = "New leader photos are out. Check GroupMe."; }
+  }
+  ret.hidden = !(live && el >= RETURN_MS);
+  if(!ret.hidden) ret.textContent = "Leaders are heading to Newman. Teams: be back by 9:00 PM. "+fmtDur((GAME_MS-el)/1000)+" left.";
 }
+
+/* ---------- Hero countdown + final-10 frenzy ----------
+   Add ?demo=15 to the URL to rehearse a 15-second run. */
+const cd = $("cd"), cdNum = $("cdNum");
+let hiddenPhase = null, soundOn = false, lastSec = null, actx = null;
+
+function beep(freq, dur, type){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "square"; o.frequency.value = freq; g.gain.value = .15;
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
+  }catch(e){}
+}
+function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+
+function setDigits(totalSec, hot){
+  totalSec = Math.max(0, totalSec);
+  $("hH").textContent = pad(Math.floor(totalSec/3600));
+  $("hM").textContent = pad(Math.floor(totalSec%3600/60));
+  $("hS").textContent = pad(totalSec%60);
+  $("heroDigits").classList.toggle("hot", !!hot);
+}
+
+function updateHero(){
+  const ms = GO_AT - Date.now();
+  const el = -ms;
+  if(ms > 0){
+    const sec = Math.ceil(ms/1000);
+    $("heroLabel").textContent = "The hunt begins in";
+    setDigits(sec, sec<=60);
+    $("heroSub").textContent = "Gather your team and learn the rules. Check the map below to see where the leaders are.";
+  } else if(el < GAME_MS){
+    const left = Math.ceil((GAME_MS-el)/1000);
+    const home = el >= RETURN_MS;
+    $("heroLabel").textContent = home ? "Leaders heading home. Time left" : "The hunt is on. Time left";
+    setDigits(left, home);
+    $("heroSub").textContent = home ? "Get back to Newman Hall before 9:00 PM. Every second late costs 2 points." : "Leaders are out there. Stay together and watch for the photo drops.";
+  } else {
+    $("heroLabel").textContent = "The hunt is over";
+    setDigits(0, false);
+    $("heroSub").textContent = "Head back to Newman Hall. Final scores are on the Scores tab.";
+  }
+  // next photo drop card
+  const dc = $("dropCard");
+  const step = DROP_EVERY*1000;
+  const nextMs = el < 0 ? step - el : (Math.floor(el/step)+1)*step - el;   // drops at start + 5, 10, 15... min
+  if(el + nextMs <= GAME_MS){
+    const nextSec = Math.ceil(nextMs/1000);
+    const t = fmtDur(nextSec);
+    $("dropT").textContent = t; $("ldT").textContent = t;
+    const nd = new Date(Date.now() + nextMs);
+    $("dropL").textContent = "Next leader photo"; $("ldAt").textContent = fmtClock(nd.getHours()*3600 + nd.getMinutes()*60 + nd.getSeconds());
+    const due = el >= 0 && nextSec <= 20;
+    dc.classList.toggle("due", due); $("leaderDrop").classList.toggle("due", due);
+    $("ldMsg").textContent = due ? "GET YOUR PHOTO READY." : "Post a photo of where you are standing right now. The hunters are watching for it.";
+  } else {
+    $("dropT").textContent = "—"; $("dropL").textContent = "No more photos"; $("ldT").textContent = "—"; $("ldAt").textContent = "game over";
+    dc.classList.remove("due"); $("leaderDrop").classList.remove("due");
+  }
+}
+
+function cdUpdate(){
+  updateHero();
+  const ms = GO_AT - Date.now();
+  if(ms < -8000){ cd.hidden = true; return; }       // GO message is over (or page opened late)
+  const sec = Math.ceil(ms/1000);
+  const crazy = ms > 0 && sec <= 10, go = ms <= 0;
+  if(!crazy && !go){ cd.hidden = true; lastSec = null; return; }   // calm: the hero shows the countdown
+  const phase = go ? "go" : "crazy";
+  if(hiddenPhase === phase){ cd.hidden = true; return; }           // user dismissed this phase
+  cd.hidden = false;
+  const changed = sec !== lastSec; lastSec = sec;
+
+  if(go){
+    if(changed || cd.className !== "go"){
+      cd.className = "go";
+      $("cdLbl").textContent = "Manhunt has begun";
+      cdNum.textContent = "GO!";
+      $("cdMsg").textContent = "Hunt the leaders. Stay together. Be back at Newman Hall by 9:00 PM.";
+      $("cdHide").textContent = "Let's go";
+      beep(1200, .9, "sawtooth"); buzz([400,100,400,100,600]);
+    }
+    return;
+  }
+  $("cdHide").textContent = "Hide";
+  cd.className = "crazy c"+(sec%2);
+  $("cdLbl").textContent = "Get ready";
+  $("cdMsg").textContent = sec<=3 ? "RUN!!!" : "Spread out. Be ready to move.";
+  if(changed){
+    cdNum.textContent = sec;
+    cdNum.classList.remove("pop"); void cdNum.offsetWidth; cdNum.classList.add("pop");
+    beep(380 + (10-sec)*70, sec<=3 ? .25 : .12);
+    buzz(sec<=3 ? 250 : 80);
+  }
+}
+$("cdHide").onclick = ()=>{ hiddenPhase = cd.classList.contains("go") ? "go" : "crazy"; cd.hidden = true; };
+$("cdSound").onclick = e=>{
+  soundOn = !soundOn;
+  e.target.textContent = soundOn ? "🔊 Sound on" : "🔇 Sound off";
+  if(soundOn) beep(660,.1);
+};
 
 /* ---------- Dialog ---------- */
-const dlg = document.getElementById("dlg");
+const dlg = $("dlg");
 let dlgCtx = null;
 function openDlg(ctx){
   dlgCtx = ctx;
   const team = state.teams.find(t=>t.id===ctx.team);
-  document.getElementById("dlgTitle").textContent = ctx.kind==="cap" ? `${team.name}: ${ctx.leader}` : `${team.name}: Newman arrival`;
+  $("dlgTitle").textContent = ctx.kind==="cap" ? `${team.name}: ${ctx.leader}` : `${team.name}: Newman arrival`;
   const existing = ctx.kind==="cap" ? team.caps[ctx.leader] : (team.arrival!=null?{at:team.arrival}:null);
-  document.getElementById("dlgSub").textContent = ctx.kind==="cap"
+  $("dlgSub").textContent = ctx.kind==="cap"
     ? (existing ? "Edit this capture." : "Record a capture. Needs "+majority(team.size)+" of "+team.size+" players present.")
     : (existing ? "Edit arrival time." : "Record arrival at Newman Hall.");
-  document.getElementById("dlgTime").value = fmtInput(existing ? existing.at : nowSecs());
-  document.getElementById("dlgDisputed").checked = !!(existing && existing.disputed);
-  document.getElementById("dispLabel").hidden = ctx.kind!=="cap";
-  document.getElementById("dlgRemove").hidden = !existing;
-  document.getElementById("dlgErr").textContent = "";
+  $("dlgTime").value = fmtInput(existing ? existing.at : nowSecs());
+  $("dlgDisputed").checked = !!(existing && existing.disputed);
+  $("dispLabel").hidden = ctx.kind!=="cap";
+  $("dlgRemove").hidden = !existing;
+  $("dlgErr").textContent = "";
   ctx.warned = false;
   dlg.showModal();
 }
 function saveDlg(at){
-  const err = document.getElementById("dlgErr");
+  const err = $("dlgErr");
   if(at==null){ err.textContent = "Enter a valid time."; return; }
   const team = state.teams.find(t=>t.id===dlgCtx.team);
   if(dlgCtx.kind==="cap"){
     if(at < START){ err.textContent = "Before 7:45 PM start. Not allowed."; return; }
     if(at > END && !dlgCtx.warned){ err.textContent = "That's after 9:00 PM. Tap Save again to confirm."; dlgCtx.warned = true; return; }
-    team.caps[dlgCtx.leader] = {at, disputed: document.getElementById("dlgDisputed").checked};
+    team.caps[dlgCtx.leader] = {at, disputed: $("dlgDisputed").checked};
   } else {
     team.arrival = at;
   }
   save(); dlg.close(); renderAll();
 }
-document.getElementById("dlgSave").onclick = ()=> saveDlg(parseInput(document.getElementById("dlgTime").value));
-document.getElementById("dlgNow").onclick = ()=>{ document.getElementById("dlgTime").value = fmtInput(nowSecs()); dlgCtx.warned = false; };
-document.getElementById("dlgCancel").onclick = ()=> dlg.close();
-document.getElementById("dlgRemove").onclick = ()=>{
+$("dlgSave").onclick = ()=> saveDlg(parseInput($("dlgTime").value));
+$("dlgNow").onclick = ()=>{ $("dlgTime").value = fmtInput(nowSecs()); dlgCtx.warned = false; };
+$("dlgCancel").onclick = ()=> dlg.close();
+$("dlgRemove").onclick = ()=>{
   const team = state.teams.find(t=>t.id===dlgCtx.team);
   if(dlgCtx.kind==="cap") delete team.caps[dlgCtx.leader]; else team.arrival = null;
   save(); dlg.close(); renderAll(); toast("Removed");
 };
 
 /* ---------- Events ---------- */
-document.getElementById("logList").addEventListener("click", e=>{
+$("logList").addEventListener("click", e=>{
   if(viewer) return;
   const lb = e.target.closest("[data-leader]");
   if(lb) return openDlg({kind:"cap", team:lb.dataset.team, leader:lb.dataset.leader});
@@ -453,13 +735,7 @@ document.getElementById("logList").addEventListener("click", e=>{
   if(ab) openDlg({kind:"arr", team:ab.dataset.arrive});
 });
 
-document.querySelectorAll("nav button").forEach(b=> b.onclick = ()=>{
-  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected", x===b));
-  ["board","log","rules","setup"].forEach(k=> document.getElementById("tab-"+k).hidden = (k!==b.dataset.tab));
-  window.scrollTo(0,0);
-});
-
-const teamEditor = document.getElementById("teamEditor");
+const teamEditor = $("teamEditor");
 teamEditor.addEventListener("input", e=>{
   const t = id => state.teams.find(x=>x.id===id);
   if(e.target.dataset.name){ t(e.target.dataset.name).name = e.target.value || "Team"; }
@@ -475,9 +751,9 @@ teamEditor.addEventListener("click", e=>{
   state.teams = state.teams.filter(t=>t!==team);
   save(); renderAll();
 });
-document.getElementById("addTeam").onclick = ()=>{ state.teams.push(newTeam(state.teams.length+1)); save(); renderAll(); };
+$("addTeam").onclick = ()=>{ state.teams.push(newTeam(state.teams.length+1)); save(); renderAll(); };
 
-document.getElementById("resetScores").onclick = ()=>{
+$("resetScores").onclick = ()=>{
   if(!confirm("Clear ALL captures and arrival times?")) return;
   state.teams.forEach(t=>{ t.caps = {}; t.arrival = null; });
   save(); renderAll(); toast("Scores reset");
@@ -487,120 +763,53 @@ async function copyText(text, okMsg){
   try{ await navigator.clipboard.writeText(text); toast(okMsg); return true; }
   catch(e){ return false; }
 }
-document.getElementById("exportBtn").onclick = async ()=>{
+$("exportBtn").onclick = async ()=>{
   const text = JSON.stringify(state);
-  const ta = document.getElementById("backupText");
+  const ta = $("backupText");
   ta.value = text;
   if(!(await copyText(text, "Backup copied"))){ ta.select(); toast("Copy it from the box"); }
 };
-document.getElementById("importBtn").onclick = ()=>{
+$("importBtn").onclick = ()=>{
   try{
-    const s = JSON.parse(document.getElementById("backupText").value);
+    const s = JSON.parse($("backupText").value);
     if(!s || !Array.isArray(s.teams)) throw 0;
     if(!confirm("Replace current data with this backup?")) return;
     state = s; save(); renderAll(); toast("Restored");
   }catch(e){ toast("That doesn't look like a valid backup"); }
 };
-document.getElementById("copyShare").onclick = async ()=>{
+$("copyShare").onclick = async ()=>{
   const enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-  const url = location.href.split("#")[0] + "#v=" + enc;
+  const url = location.href.split("#")[0].split("?")[0] + "#v=" + enc;
   if(!(await copyText(url, "Spectator link copied"))){
-    const ta = document.getElementById("backupText"); ta.value = url; ta.select(); toast("Copy the link from the box");
+    const ta = $("backupText"); ta.value = url; ta.select(); toast("Copy the link from the box");
   }
 };
-document.getElementById("exitViewer").onclick = ()=>{
+$("exitViewer").onclick = ()=>{
   location.href = location.href.split("#")[0]; location.reload();
 };
 
 let toastTimer;
 function toast(msg){
-  const el = document.getElementById("toast");
+  const el = $("toast");
   el.textContent = msg; el.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(()=> el.hidden = true, 2200);
 }
 
-/* ---------- Start countdown ----------
-   Big pre-game countdown. Add ?demo=15 to the URL to rehearse a 15-second run. */
-const demo = parseInt(new URLSearchParams(location.search).get("demo"));
-const GO_AT = demo > 0 ? Date.now() + demo*1000 : (()=>{ const d = new Date(); d.setHours(19,45,0,0); return d.getTime(); })();
-const cd = document.getElementById("cd"), cdNum = document.getElementById("cdNum");
-let cdHidden = false, soundOn = false, lastSec = null, actx = null;
-
-function beep(freq, dur, type){
-  if(!soundOn) return;
-  try{
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    const o = actx.createOscillator(), g = actx.createGain();
-    o.type = type || "square"; o.frequency.value = freq; g.gain.value = .15;
-    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
-  }catch(e){}
-}
-function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
-
-function cdUpdate(){
-  const ms = GO_AT - Date.now();
-  if(ms < -8000){ cd.hidden = true; return; }       // GO message is over (or page opened late)
-  const sec = Math.ceil(ms/1000);
-  const crazy = ms > 0 && sec <= 10, go = ms <= 0;
-  if(!crazy && !go && cdHidden){ cd.hidden = true; return; }
-  cd.hidden = false;
-  const changed = sec !== lastSec; lastSec = sec;
-
-  if(go){
-    if(changed || !cd.classList.contains("go")){
-      cd.className = "go";
-      document.getElementById("cdLbl").textContent = "Manhunt has begun";
-      cdNum.textContent = "GO!";
-      document.getElementById("cdMsg").textContent = "Hunt the leaders. Stay together. Be back at Newman Hall by 9:00 PM.";
-      document.getElementById("cdHide").textContent = "Let's go";
-      beep(1200, .9, "sawtooth"); buzz([400,100,400,100,600]);
-    }
-    return;
-  }
-  document.getElementById("cdHide").textContent = "Hide";
-  if(crazy){
-    cd.className = "crazy c"+(sec%2);
-    document.getElementById("cdLbl").textContent = "Get ready";
-    document.getElementById("cdMsg").textContent = sec<=3 ? "RUN!!!" : "Spread out. Be ready to move.";
-    if(changed){
-      cdNum.textContent = sec;
-      cdNum.classList.remove("pop"); void cdNum.offsetWidth; cdNum.classList.add("pop");
-      beep(380 + (10-sec)*70, sec<=3 ? .25 : .12);
-      buzz(sec<=3 ? 250 : 80);
-    }
-    return;
-  }
-  cd.className = "";
-  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
-  document.getElementById("cdLbl").textContent = "Manhunt begins at 7:45 PM";
-  cdNum.textContent = h ? h+":"+pad(m)+":"+pad(s) : m+":"+pad(s);
-  document.getElementById("cdMsg").textContent = "Meet up with your team. Check the Rules tab while you wait.";
-}
-document.getElementById("cdHide").onclick = ()=>{ cdHidden = true; cd.hidden = true; };
-document.getElementById("cdSound").onclick = e=>{
-  soundOn = !soundOn;
-  e.target.textContent = soundOn ? "🔊 Sound on" : "🔇 Sound off";
-  if(soundOn) beep(660,.1);
-};
-setInterval(cdUpdate, 100);
+/* ---------- Map fallback ---------- */
+(function(){
+  const img = $("mapImg");
+  const fail = ()=>{ img.style.display = "none"; $("mapFall").style.display = "block"; };
+  img.addEventListener("error", fail);
+  if(img.complete && img.naturalWidth === 0) fail();
+})();
 
 /* ---------- Init ---------- */
-renderCurve(); renderAll(); tick();
+renderCurve(); renderQuads(); renderAll(); applyGate(); tick(); cdUpdate();
 setInterval(tick, 1000);
+setInterval(cdUpdate, 100);
 window.addEventListener("storage", e=>{ if(e.key===STORE && !viewer){ state = load(); renderAll(); } });
 window.addEventListener("hashchange", ()=> location.reload());
-
-/* Self-check of the worked examples from the rules (visible in console) */
-(function(){
-  const mk = (arr)=>({caps:Object.fromEntries(arr.map((s,i)=>[LEADERS[i],{at:s}])),arrival:null});
-  let a = START, b = [];
-  [240,300,360].forEach(g=>{a+=g;b.push(a);});
-  const s3 = scoreTeam(mk(b)).total;
-  a = START; b = [];
-  [600,600,720,900].forEach(g=>{a+=g;b.push(a);});
-  const s4 = scoreTeam(mk(b)).total;
-  console.log("self-check:", s3, "(expect ~20060)", s4, "(expect ~19545)");
-})();
+if(viewer) showTab("board");
 })();
 </script>
 </body>
