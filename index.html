@@ -205,6 +205,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 
   <!-- SCORES -->
   <section id="tab-board" hidden>
+    <div id="liveNote" class="sub" style="margin-bottom:8px"></div>
     <div id="boardNote"></div>
     <div id="board"></div>
   </section>
@@ -281,6 +282,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
       <button class="btn primary full" id="pwGo" style="margin-top:8px">Unlock</button>
     </div>
     <div id="keeperApp" hidden>
+      <div class="sub" id="syncStatus" style="margin-bottom:8px"></div>
       <div class="subnav">
         <button class="btn" data-sub="log" aria-pressed="true">Log captures</button>
         <button class="btn" data-sub="setup" aria-pressed="false">Setup</button>
@@ -357,14 +359,17 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 
 /* ---------- Config (edit these) ---------- */
 const LEADERS = ["Kevin","Owen","Gabe","Jack"];
-const QUADS = [                       // leader: fill in names once assigned
-  {key:"NW", name:"Northwest", leader:""},
-  {key:"NE", name:"Northeast", leader:""},
-  {key:"SW", name:"Southwest", leader:""},
-  {key:"SE", name:"Southeast", leader:""}
+const QUADS = [
+  {key:"NW", name:"Northwest", leader:"Gabe"},
+  {key:"NE", name:"Northeast", leader:"Kevin"},
+  {key:"SW", name:"Southwest", leader:"Jack"},
+  {key:"SE", name:"Southeast", leader:"Owen"}
 ];
-const GROUPME_URL = "";               // paste the GroupMe invite/share link to show a button
-const KEEPER_HASH = 2917355938830596; // hash of the scorekeeper password
+const GROUPME_URL = "https://web.groupme.com/chats/group/99395482";
+const SUPABASE_URL = "";              // e.g. https://abcdxyz.supabase.co  (leave blank for local-only mode)
+const SUPABASE_KEY = "";              // the public anon key, never the service_role key
+const KEEPER_HASH = 2917355938830596; // local-only mode password check (unused once Supabase is set)
+const REMOTE = !!(SUPABASE_URL && SUPABASE_KEY);
 const DROP_EVERY = 300;               // leader photo every 5 minutes (seconds)
 
 const START = 19*3600 + 45*60;   // 7:45 PM, seconds since midnight
@@ -422,6 +427,54 @@ function load(){
 function save(){
   if(viewer) return;
   try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){ toast("Could not save (storage blocked)"); }
+  queuePush();
+}
+
+/* ---------- Supabase sync (optional) ----------
+   Everyone polls manhunt_state for the standings. Only the scorekeeper writes, through the
+   manhunt_save() function, which checks the password on the server (see supabase.sql). */
+let keeperPw = ""; try{ keeperPw = sessionStorage.getItem("mh-pw") || ""; }catch(e){}
+let dirty = false, pushTimer = null, pushing = false, lastSync = null, syncErr = false;
+async function sb(path, body){
+  const r = await fetch(SUPABASE_URL + path, {
+    method: body ? "POST" : "GET",
+    headers: {apikey: SUPABASE_KEY, Authorization: "Bearer "+SUPABASE_KEY, "Content-Type":"application/json"},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if(!r.ok) throw new Error(r.status);
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+function keeperActive(){ return isUnlocked() && !viewer; }
+function showSync(){
+  const el = $("syncStatus"); if(!el) return;
+  if(!REMOTE){ el.textContent = "Local only: standings are saved on this device."; return; }
+  el.textContent = syncErr ? "Offline. Changes will retry automatically." : dirty ? "Saving…" : lastSync ? "Synced "+fmtClock(lastSync) : "";
+  $("liveNote").textContent = lastSync && !keeperActive() ? "Live standings · updated "+fmtClock(lastSync) : "";
+}
+async function pull(){
+  if(!REMOTE || viewer || keeperActive()) return;
+  try{
+    const j = await sb("/rest/v1/manhunt_state?id=eq.1&select=state");
+    if(j && j[0] && j[0].state && Array.isArray(j[0].state.teams) && j[0].state.teams.length){ state = j[0].state; renderBoard(); }
+    lastSync = nowSecs(); syncErr = false;
+  }catch(e){ syncErr = true; }
+  showSync();
+}
+function queuePush(){
+  if(!REMOTE || !keeperActive()) return;
+  dirty = true; showSync();
+  clearTimeout(pushTimer); pushTimer = setTimeout(push, 400);
+}
+async function push(){
+  if(!dirty || pushing) return;
+  pushing = true;
+  const snapshot = JSON.stringify(state); dirty = false;
+  try{
+    await sb("/rest/v1/rpc/manhunt_save", {pw: keeperPw, new_state: JSON.parse(snapshot)});
+    lastSync = nowSecs(); syncErr = false;
+  }catch(e){ dirty = true; syncErr = true; }
+  pushing = false; showSync();
+  if(dirty) pushTimer = setTimeout(push, 5000);
 }
 
 /* ---------- Formatting ---------- */
@@ -543,14 +596,28 @@ function applyGate(){
   $("gate").hidden = viewer || un;
   $("keeperApp").hidden = !un;
 }
-function tryUnlock(){
-  if(hashStr($("pw").value.trim()) === KEEPER_HASH){
-    setUnlocked(true); $("pw").value = ""; $("pwErr").textContent = ""; applyGate();
-  } else { $("pwErr").textContent = "Wrong password."; }
+async function tryUnlock(){
+  const pw = $("pw").value.trim();
+  let ok;
+  if(REMOTE){
+    try{ ok = await sb("/rest/v1/rpc/manhunt_check", {pw}) === true; }
+    catch(e){ $("pwErr").textContent = "Can't reach the server. Check your connection."; return; }
+  } else ok = hashStr(pw) === KEEPER_HASH;
+  if(!ok){ $("pwErr").textContent = "Wrong password."; return; }
+  setUnlocked(true); $("pw").value = ""; $("pwErr").textContent = "";
+  if(REMOTE){
+    keeperPw = pw; try{ sessionStorage.setItem("mh-pw", pw); }catch(e){}
+    try{   // adopt the server's standings if there are any; otherwise publish this device's
+      const j = await sb("/rest/v1/manhunt_state?id=eq.1&select=state");
+      if(j && j[0] && j[0].state && j[0].state.teams && j[0].state.teams.length){ state = j[0].state; renderAll(); }
+      else { dirty = true; push(); }
+    }catch(e){}
+  }
+  applyGate(); showSync();
 }
 $("pwGo").onclick = tryUnlock;
 $("pw").addEventListener("keydown", e=>{ if(e.key==="Enter") tryUnlock(); });
-$("lockBtn").onclick = ()=>{ setUnlocked(false); applyGate(); };
+$("lockBtn").onclick = ()=>{ setUnlocked(false); keeperPw = ""; try{ sessionStorage.removeItem("mh-pw"); }catch(e){} applyGate(); pull(); };
 document.querySelectorAll(".subnav [data-sub]").forEach(b=> b.onclick = ()=>{
   document.querySelectorAll(".subnav [data-sub]").forEach(x=>x.setAttribute("aria-pressed", x===b));
   $("sub-log").hidden = b.dataset.sub!=="log"; $("sub-setup").hidden = b.dataset.sub!=="setup";
@@ -804,7 +871,9 @@ function toast(msg){
 })();
 
 /* ---------- Init ---------- */
-renderCurve(); renderQuads(); renderAll(); applyGate(); tick(); cdUpdate();
+if(REMOTE && isUnlocked() && !keeperPw){ setUnlocked(false); }   // lost the password: ask again
+renderCurve(); renderQuads(); renderAll(); applyGate(); tick(); cdUpdate(); showSync();
+if(REMOTE){ pull(); setInterval(pull, 5000); }
 setInterval(tick, 1000);
 setInterval(cdUpdate, 100);
 window.addEventListener("storage", e=>{ if(e.key===STORE && !viewer){ state = load(); renderAll(); } });
