@@ -120,6 +120,26 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 .fact b{display:block;font:800 22px var(--mono);color:var(--accent)}
 .fact span{color:var(--mute);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .drop.due{border-color:var(--warn);animation:throb .8s infinite}
+.sightsec{margin-top:26px}
+.sightsec h2{margin:0 0 4px;letter-spacing:.08em;text-transform:uppercase;font-size:20px}
+.sightsec h2 span{color:var(--accent)}
+.sightNext{display:inline-block;margin:6px 0 12px;padding:5px 12px;border:1px solid var(--line);border-radius:99px;font:600 14px var(--mono);color:var(--accent)}
+.sightNext.hot{border-color:var(--bad);color:var(--bad);font-size:20px;animation:throb .5s infinite}
+.sights{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sight{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.simg{position:relative;aspect-ratio:3/4;background:#0e1114;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:13px;text-align:center;padding:8px}
+.simg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.new{position:absolute;top:8px;left:8px;background:var(--bad);color:#fff;font:800 11px var(--mono);letter-spacing:.1em;padding:3px 7px;border-radius:6px;animation:throb 1s infinite}
+.smeta{padding:8px 10px}
+.smeta b{display:block;letter-spacing:.04em}
+.smeta .ago{color:var(--mute);font-size:12px;font-family:var(--mono)}
+.smeta .snote{font-size:13px;margin-top:3px;overflow-wrap:anywhere}
+#photoPrev{display:block;width:100%;max-height:300px;object-fit:contain;border-radius:10px;margin-top:10px;background:#0e1114}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.who .btn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+input[type=file]{display:none}
+#imgDlg{width:min(96vw,720px);padding:8px}
+#imgDlg img{width:100%;max-height:80vh;object-fit:contain;display:block;border-radius:8px}
 
 /* ---------- Final 10 seconds overlay ---------- */
 #cd{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(circle at 50% 40%,#1c2230,#07090c 70%)}
@@ -134,6 +154,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 #cd.crazy .num{font-size:clamp(140px,55vw,420px);color:#fff;text-shadow:0 0 30px var(--bad),0 0 80px var(--accent)}
 #cd.crazy .num.pop{animation:pop .9s ease-out}
 #cd.go{background:radial-gradient(circle,#0e5c3a,#021a10 75%)}
+#cd.go .num.long{font-size:clamp(48px,15vw,140px)}
 #cd.go .num{font-size:clamp(120px,48vw,380px);color:#fff;text-shadow:0 0 40px var(--good);animation:pop .8s ease-out}
 @keyframes pop{0%{transform:scale(2.4);opacity:0}25%{opacity:1}100%{transform:scale(1)}}
 @keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(-5px,4px)}50%{transform:translate(5px,-4px)}75%{transform:translate(-4px,-5px)}100%{transform:translate(4px,5px)}}
@@ -173,6 +194,13 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
       </div>
       <div class="heroSub" id="heroSub">&nbsp;</div>
       <button class="btn scrollbtn" id="toMap">▼ See where the leaders are hiding</button>
+    </div>
+
+    <div class="sightsec" id="sightsec">
+      <h2>Leader <span>sightings</span></h2>
+      <div class="sub">Each leader posts a fresh photo every 5 minutes. The newest one is shown here.</div>
+      <div class="sightNext" id="sightNext">Next photos in --:--</div>
+      <div class="sights" id="sights"></div>
     </div>
 
     <div class="mapsec" id="mapsec">
@@ -257,6 +285,26 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
       <div class="sub" style="margin-top:8px">Due at <span id="ldAt">--</span></div>
       <div id="groupmeWrap2" style="margin-top:12px" hidden><a class="btn primary full" id="groupmeBtn2" target="_blank" rel="noopener">Open GroupMe</a></div>
     </div>
+    <div class="card" id="lgate">
+      <strong>Leader login</strong>
+      <label for="lpw">Leader password</label>
+      <input type="password" id="lpw" autocomplete="off" autocapitalize="off">
+      <div class="err" id="lpwErr"></div>
+      <button class="btn primary full" id="lpwGo" style="margin-top:8px">Unlock</button>
+    </div>
+    <div class="card" id="lform" hidden>
+      <strong>Post your check-in</strong>
+      <div class="sub">Who are you?</div>
+      <div class="who" id="who"></div>
+      <label class="btn full" for="photoIn" id="photoBtn">📷 Take or choose a photo</label>
+      <input type="file" id="photoIn" accept="image/*">
+      <img id="photoPrev" alt="Preview" hidden>
+      <label for="noteIn">Where are you? (optional)</label>
+      <input type="text" id="noteIn" maxlength="140" placeholder="e.g. behind the engineering fountain">
+      <button class="btn primary full" id="sendCheckin" style="margin-top:10px">Send check-in</button>
+      <div class="sub" id="sendStatus" style="margin-top:6px"></div>
+      <button class="btn" id="lLock" style="margin-top:10px">Lock</button>
+    </div>
     <div class="card">
       <strong>Leader reminders</strong>
       <ul class="sub" style="margin:8px 0 0;padding-left:20px">
@@ -315,6 +363,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
           <p class="sub">Clears all captures and arrivals but keeps teams.</p>
           <div class="row">
             <button class="btn danger" id="resetScores">Reset all scores</button>
+            <button class="btn danger" id="clearCheckins">Clear leader photos</button>
             <button class="btn" id="lockBtn">Lock scorekeeper</button>
           </div>
         </div>
@@ -351,6 +400,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
     </div>
   </div>
 </div>
+<dialog id="imgDlg"><img id="imgBig" alt="Leader photo"><div class="row" style="margin-top:8px"><button class="btn full" id="imgClose">Close</button></div></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -440,7 +490,7 @@ async function sb(path, body){
     headers: {apikey: SUPABASE_KEY, "Content-Type":"application/json"},
     body: body ? JSON.stringify(body) : undefined
   });
-  if(!r.ok) throw new Error(r.status);
+  if(!r.ok){ const t = await r.text().catch(()=>""); throw new Error(r.status+" "+t); }
   const t = await r.text(); return t ? JSON.parse(t) : null;
 }
 function keeperActive(){ return isUnlocked() && !viewer; }
@@ -614,10 +664,15 @@ document.querySelectorAll(".subnav [data-sub]").forEach(b=> b.onclick = ()=>{
   $("sub-log").hidden = b.dataset.sub!=="log"; $("sub-setup").hidden = b.dataset.sub!=="setup";
 });
 
-/* ---------- Header clock + banners ---------- */
-const demo = parseInt(new URLSearchParams(location.search).get("demo"));
+/* ---------- Header clock + banners ----------
+   Rehearsal URL params: ?demo=15 (start in 15s), &game=60 (60s game, return 25s before end), &drop=20 (photo every 20s) */
+const params = new URLSearchParams(location.search);
+const demo = parseInt(params.get("demo"));
 const GO_AT = demo > 0 ? Date.now() + demo*1000 : (()=>{ const d = new Date(); d.setHours(19,45,0,0); return d.getTime(); })();
-const GAME_MS = (END-START)*1000, RETURN_MS = (RETURN-START)*1000;
+const gameParam = parseInt(params.get("game"));
+const GAME_MS = (gameParam > 30 ? gameParam : (END-START))*1000;
+const RETURN_MS = gameParam > 30 ? GAME_MS-25000 : (RETURN-START)*1000;
+const DROP_MS = (parseInt(params.get("drop")) || DROP_EVERY)*1000;
 
 function tick(){
   $("clock").textContent = fmtClock(nowSecs());
@@ -631,19 +686,19 @@ function tick(){
   const photo = $("photoBanner"), ret = $("returnBanner");
   photo.hidden = true;
   if(live && el < RETURN_MS + 1000){
-    const into = (el/1000) % DROP_EVERY;
-    const toNext = Math.ceil(DROP_EVERY - into);
-    if(toNext <= 20 && el >= 0){ photo.hidden = false; photo.textContent = "Leader photos drop in "+toNext+"s"; }
-    else if(into < 20 && el >= 5000){ photo.hidden = false; photo.textContent = "New leader photos are out. Check GroupMe."; }
+    const into = el % DROP_MS;
+    const toNext = Math.ceil((DROP_MS - into)/1000);
+    if(toNext <= 20){ photo.hidden = false; photo.textContent = "Leader photos drop in "+toNext+"s"; }
+    else if(into < 20000 && el >= 5000){ photo.hidden = false; photo.textContent = "New leader photos are out. See the Home tab."; }
   }
   ret.hidden = !(live && el >= RETURN_MS);
   if(!ret.hidden) ret.textContent = "Leaders are heading to Newman. Teams: be back by 9:00 PM. "+fmtDur((GAME_MS-el)/1000)+" left.";
+  updateAgo();
 }
 
-/* ---------- Hero countdown + final-10 frenzy ----------
-   Add ?demo=15 to the URL to rehearse a 15-second run. */
+/* ---------- Hero countdown + final-10 frenzies ---------- */
 const cd = $("cd"), cdNum = $("cdNum");
-let hiddenPhase = null, soundOn = false, lastSec = null, actx = null;
+let hiddenPhase = null, soundOn = false, lastSec = null, lastPhase = null, actx = null;
 
 function beep(freq, dur, type){
   if(!soundOn) return;
@@ -683,11 +738,10 @@ function updateHero(){
     setDigits(0, false);
     $("heroSub").textContent = "Head back to Newman Hall. Final scores are on the Scores tab.";
   }
-  // next photo drop card
-  const dc = $("dropCard");
-  const step = DROP_EVERY*1000;
-  const nextMs = el < 0 ? step - el : (Math.floor(el/step)+1)*step - el;   // drops at start + 5, 10, 15... min
-  if(el + nextMs <= GAME_MS){
+  // next photo drop (first drop is one interval after the start: 7:50 PM)
+  const dc = $("dropCard"), sn = $("sightNext");
+  const nextMs = el < 0 ? DROP_MS - el : (Math.floor(el/DROP_MS)+1)*DROP_MS - el;
+  if(el + nextMs <= GAME_MS + 1){
     const nextSec = Math.ceil(nextMs/1000);
     const t = fmtDur(nextSec);
     $("dropT").textContent = t; $("ldT").textContent = t;
@@ -696,51 +750,197 @@ function updateHero(){
     const due = el >= 0 && nextSec <= 20;
     dc.classList.toggle("due", due); $("leaderDrop").classList.toggle("due", due);
     $("ldMsg").textContent = due ? "GET YOUR PHOTO READY." : "Post a photo of where you are standing right now. The hunters are watching for it.";
+    const fresh = el >= 0 && (el % DROP_MS) < 30000;
+    sn.textContent = fresh ? "📸 Fresh photos just dropped" : (el < 0 ? "First photos in " : "Next photos in ") + t;
+    sn.classList.toggle("hot", !fresh && nextSec <= 10);
   } else {
     $("dropT").textContent = "—"; $("dropL").textContent = "No more photos"; $("ldT").textContent = "—"; $("ldAt").textContent = "game over";
     dc.classList.remove("due"); $("leaderDrop").classList.remove("due");
+    sn.textContent = "No more photo drops"; sn.classList.remove("hot");
   }
 }
 
+// Frenzy moments: the last 10s before each one, then a big message for 8s.
+const EVENTS = [
+  {at:0, lbl:"Get ready", msg:"Spread out. Be ready to move.",
+   goLbl:"Manhunt has begun", goNum:"GO!", goMsg:"Hunt the leaders. Stay together. Be back at Newman Hall by 9:00 PM.", btn:"Let's go"},
+  {at:RETURN_MS, lbl:"Leaders turn back in", msg:"The leaders are about to head for Newman.",
+   goLbl:"Leaders heading home", goNum:"HEAD HOME", goMsg:"Leaders are racing back to Newman Hall and can still be captured until they cross the street. Hunters: be back by 9:00 PM!", btn:"On it"},
+  {at:GAME_MS, lbl:"Time almost up", msg:"Get to Newman Hall!",
+   goLbl:"The hunt is over", goNum:"TIME!", goMsg:"Anyone not at Newman Hall is now losing 2 points every second.", btn:"Close"}
+];
+
 function cdUpdate(){
   updateHero();
-  const ms = GO_AT - Date.now();
-  if(ms < -8000){ cd.hidden = true; return; }       // GO message is over (or page opened late)
-  const sec = Math.ceil(ms/1000);
-  const crazy = ms > 0 && sec <= 10, go = ms <= 0;
-  if(!crazy && !go){ cd.hidden = true; lastSec = null; return; }   // calm: the hero shows the countdown
-  const phase = go ? "go" : "crazy";
+  const now = Date.now();
+  let ev = null, evi = -1, ms = 0;
+  for(let i=0;i<EVENTS.length;i++){
+    const m = GO_AT + EVENTS[i].at - now;
+    if(m <= 10000 && m > -8000){ ev = EVENTS[i]; evi = i; ms = m; break; }
+  }
+  if(!ev){ cd.hidden = true; lastSec = null; lastPhase = null; return; }
+  const sec = Math.ceil(ms/1000), go = ms <= 0;
+  const phase = evi + (go ? "g" : "c");
   if(hiddenPhase === phase){ cd.hidden = true; return; }           // user dismissed this phase
   cd.hidden = false;
-  const changed = sec !== lastSec; lastSec = sec;
+  const phaseChanged = phase !== lastPhase; lastPhase = phase;
 
   if(go){
-    if(changed || cd.className !== "go"){
+    if(phaseChanged){
       cd.className = "go";
-      $("cdLbl").textContent = "Manhunt has begun";
-      cdNum.textContent = "GO!";
-      $("cdMsg").textContent = "Hunt the leaders. Stay together. Be back at Newman Hall by 9:00 PM.";
-      $("cdHide").textContent = "Let's go";
+      $("cdLbl").textContent = ev.goLbl;
+      cdNum.textContent = ev.goNum;
+      cdNum.className = "num" + (ev.goNum.length > 4 ? " long" : "");
+      $("cdMsg").textContent = ev.goMsg;
+      $("cdHide").textContent = ev.btn;
       beep(1200, .9, "sawtooth"); buzz([400,100,400,100,600]);
     }
     return;
   }
   $("cdHide").textContent = "Hide";
   cd.className = "crazy c"+(sec%2);
-  $("cdLbl").textContent = "Get ready";
-  $("cdMsg").textContent = sec<=3 ? "RUN!!!" : "Spread out. Be ready to move.";
-  if(changed){
+  $("cdLbl").textContent = ev.lbl;
+  $("cdMsg").textContent = sec<=3 ? "RUN!!!" : ev.msg;
+  const changed = sec !== lastSec; lastSec = sec;
+  if(changed || phaseChanged){
     cdNum.textContent = sec;
-    cdNum.classList.remove("pop"); void cdNum.offsetWidth; cdNum.classList.add("pop");
+    cdNum.className = "num";
+    void cdNum.offsetWidth; cdNum.classList.add("pop");
     beep(380 + (10-sec)*70, sec<=3 ? .25 : .12);
     buzz(sec<=3 ? 250 : 80);
   }
 }
-$("cdHide").onclick = ()=>{ hiddenPhase = cd.classList.contains("go") ? "go" : "crazy"; cd.hidden = true; };
+$("cdHide").onclick = ()=>{ hiddenPhase = lastPhase; cd.hidden = true; };
 $("cdSound").onclick = e=>{
   soundOn = !soundOn;
   e.target.textContent = soundOn ? "🔊 Sound on" : "🔇 Sound off";
   if(soundOn) beep(660,.1);
+};
+
+/* ---------- Leader check-ins (photos) ---------- */
+let lpw = ""; try{ lpw = sessionStorage.getItem("mh-lpw") || ""; }catch(e){}
+let myLeader = ""; try{ myLeader = localStorage.getItem("mh-leader") || ""; }catch(e){}
+let photoData = null, sightsData = {}, sightsSig = "";
+const imgCache = {};
+
+async function pullCheckins(){
+  if(!REMOTE) return;
+  try{
+    const rows = await sb("/rest/v1/manhunt_checkins?select=id,leader,note,created_at&order=id.desc&limit=40");
+    const latest = {};
+    for(const r of rows || []) if(!latest[r.leader]) latest[r.leader] = r;
+    for(const l of LEADERS){
+      const r = latest[l];
+      if(r && !imgCache[r.id]){
+        const j = await sb("/rest/v1/manhunt_checkins?id=eq."+r.id+"&select=image");
+        if(j && j[0]) imgCache[r.id] = j[0].image;
+      }
+    }
+    sightsData = latest;
+    renderSights();
+  }catch(e){}
+}
+function renderSights(){
+  const sig = QUADS.map(q=>{ const r = sightsData[q.leader]; return r ? r.id+(imgCache[r.id]?"i":"") : "-"; }).join(",");
+  if(sig === sightsSig) return;
+  sightsSig = sig;
+  $("sights").innerHTML = QUADS.map(q=>{
+    const r = sightsData[q.leader];
+    const src = r && imgCache[r.id];
+    const ts = r ? new Date(r.created_at).getTime() : 0;
+    const body = src ? `<img src="${src}" alt="${esc(q.leader)}'s latest photo"><span class="new" data-new="${ts}" hidden>NEW</span>` : "No check-in yet";
+    const meta = r ? `<span class="ago" data-ts="${ts}"></span>${r.note ? `<div class="snote">${esc(r.note)}</div>` : ""}` : `<span class="ago">Waiting for first photo</span>`;
+    return `<div class="sight"><div class="simg">${body}</div><div class="smeta"><b>${esc(q.leader)} · ${q.key}</b>${meta}</div></div>`;
+  }).join("");
+  updateAgo();
+}
+function agoText(ms){
+  const s = Math.max(0, Math.round(ms/1000));
+  if(s < 60) return s+"s ago";
+  const m = Math.floor(s/60);
+  return m < 60 ? m+" min ago" : Math.floor(m/60)+"h "+(m%60)+"m ago";
+}
+function updateAgo(){
+  const now = Date.now();
+  document.querySelectorAll("#sights .ago[data-ts]").forEach(el=>{
+    const ts = +el.dataset.ts, d = new Date(ts);
+    el.textContent = fmtClock(d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds()).replace(/:\d\d /," ") + " · " + agoText(now - ts);
+  });
+  document.querySelectorAll("#sights .new").forEach(el=>{ el.hidden = now - (+el.dataset.new) > 90000; });
+}
+$("sights").addEventListener("click", e=>{
+  const img = e.target.closest("img"); if(!img) return;
+  $("imgBig").src = img.src; $("imgDlg").showModal();
+});
+$("imgClose").onclick = ()=> $("imgDlg").close();
+
+function shrink(file, max, q){
+  return new Promise((res, rej)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const s = Math.min(1, max/Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", q));
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error("bad image")); };
+    img.src = url;
+  });
+}
+function renderWho(){
+  $("who").innerHTML = LEADERS.map(l=>`<button class="btn" data-who="${l}" aria-pressed="${l===myLeader}">${l}</button>`).join("");
+}
+function applyLeaderGate(){
+  $("lgate").hidden = !!lpw; $("lform").hidden = !lpw;
+}
+$("who").addEventListener("click", e=>{
+  const b = e.target.closest("[data-who]"); if(!b) return;
+  myLeader = b.dataset.who; try{ localStorage.setItem("mh-leader", myLeader); }catch(err){}
+  renderWho();
+});
+async function leaderUnlock(){
+  const pw = $("lpw").value.trim();
+  if(!REMOTE){ $("lpwErr").textContent = "Photo posting needs the server connection."; return; }
+  try{
+    if(await sb("/rest/v1/rpc/manhunt_leader_check", {pw}) !== true){ $("lpwErr").textContent = "Wrong password."; return; }
+  }catch(e){ $("lpwErr").textContent = "Can't reach the server. Check your signal."; return; }
+  lpw = pw; try{ sessionStorage.setItem("mh-lpw", pw); }catch(e){}
+  $("lpw").value = ""; $("lpwErr").textContent = ""; applyLeaderGate();
+}
+$("lpwGo").onclick = leaderUnlock;
+$("lpw").addEventListener("keydown", e=>{ if(e.key==="Enter") leaderUnlock(); });
+$("lLock").onclick = ()=>{ lpw = ""; try{ sessionStorage.removeItem("mh-lpw"); }catch(e){} applyLeaderGate(); };
+$("photoIn").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  $("sendStatus").textContent = "Preparing photo…";
+  try{
+    photoData = await shrink(f, 960, 0.72);
+    $("photoPrev").src = photoData; $("photoPrev").hidden = false;
+    $("sendStatus").textContent = "Photo ready (" + Math.round(photoData.length/1024) + " KB).";
+  }catch(err){ photoData = null; $("sendStatus").textContent = "Couldn't read that photo. Try another."; }
+  e.target.value = "";
+});
+$("sendCheckin").onclick = async ()=>{
+  const st = $("sendStatus"), btn = $("sendCheckin");
+  if(!myLeader){ st.textContent = "Pick your name first."; return; }
+  if(!photoData){ st.textContent = "Add a photo first."; return; }
+  btn.disabled = true; st.textContent = "Sending…";
+  try{
+    await sb("/rest/v1/rpc/manhunt_checkin", {pw: lpw, p_leader: myLeader, p_image: photoData, p_note: $("noteIn").value.trim()});
+    photoData = null; $("photoPrev").hidden = true; $("noteIn").value = "";
+    st.textContent = "Sent at " + fmtClock(nowSecs()) + ". Nice."; toast("Check-in sent");
+    pullCheckins();
+  }catch(e){
+    if(/bad password/.test(e.message)){ lpw = ""; try{ sessionStorage.removeItem("mh-lpw"); }catch(x){} applyLeaderGate(); }
+    else st.textContent = "Didn't send. Check your signal and tap Send again.";
+  }
+  btn.disabled = false;
+};
+$("clearCheckins").onclick = async ()=>{
+  if(!confirm("Delete ALL leader photos?")) return;
+  try{ await sb("/rest/v1/rpc/manhunt_clear_checkins", {pw: keeperPw}); sightsSig = ""; sightsData = {}; renderSights(); toast("Photos cleared"); }
+  catch(e){ toast("Couldn't clear photos"); }
 };
 
 /* ---------- Dialog ---------- */
@@ -864,7 +1064,8 @@ function toast(msg){
 /* ---------- Init ---------- */
 if(REMOTE && isUnlocked() && !keeperPw){ setUnlocked(false); }   // lost the password: ask again
 renderCurve(); renderQuads(); renderAll(); applyGate(); tick(); cdUpdate(); showSync();
-if(REMOTE){ pull(); setInterval(pull, 5000); }
+renderWho(); applyLeaderGate(); renderSights();
+if(REMOTE){ pull(); pullCheckins(); setInterval(()=>{ pull(); pullCheckins(); }, 5000); }
 setInterval(tick, 1000);
 setInterval(cdUpdate, 100);
 window.addEventListener("storage", e=>{ if(e.key===STORE && !viewer){ state = load(); renderAll(); } });
