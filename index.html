@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Manhunt Scoreboard</title>
+<style>
+:root{
+  --bg:#0b0d10; --panel:#14181d; --panel2:#1b2027; --line:#2a313a;
+  --text:#e8ecf0; --mute:#8b96a3; --accent:#e6a817; --accent-ink:#1a1200;
+  --good:#3ecf8e; --bad:#ff5d5d; --warn:#ffb020;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{padding:14px 16px 10px;border-bottom:1px solid var(--line);background:linear-gradient(#10141a,#0b0d10)}
+.title{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+h1{margin:0;font-size:20px;letter-spacing:.14em;text-transform:uppercase}
+h1 span{color:var(--accent)}
+.badge{font-size:11px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--mute)}
+.badge.live{color:var(--good);border-color:var(--good)}
+.badge.view{color:var(--warn);border-color:var(--warn)}
+.clock{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.time{font:600 34px/1 var(--mono);letter-spacing:.02em}
+.phase{text-align:right;font-size:13px;color:var(--mute)}
+.phase b{display:block;color:var(--text);font-size:15px}
+.banner{margin:10px 16px 0;padding:10px 12px;border-radius:10px;font-size:14px;border:1px solid var(--warn);color:var(--warn);background:#2a1f05}
+.banner.red{border-color:var(--bad);color:var(--bad);background:#2a0d0d}
+.banner[hidden]{display:none}
+nav{display:flex;position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav button{flex:1;padding:12px 4px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);font:600 14px inherit;font-family:inherit;cursor:pointer}
+nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+main{padding:14px 16px 40px;max-width:860px;margin:0 auto}
+section[hidden]{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.rank{display:flex;align-items:center;gap:10px}
+.pos{font:700 20px var(--mono);width:30px;color:var(--accent)}
+.rank .name{flex:1;font-weight:700;font-size:17px;min-width:0;overflow-wrap:anywhere}
+.rank .score{font:700 22px var(--mono)}
+.sub{color:var(--mute);font-size:13px}
+.dots{display:flex;gap:5px;margin-top:6px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.dot.on{background:var(--good)}
+details summary{cursor:pointer;color:var(--mute);font-size:13px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+td,th{padding:5px 4px;text-align:left;border-bottom:1px solid var(--line)}
+td.n,th.n{text-align:right;font-family:var(--mono)}
+.neg{color:var(--bad)} .pos-c{color:var(--good)}
+.leaders{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.lbtn{min-height:52px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:600 15px inherit;font-family:inherit;text-align:left;padding:8px 10px;cursor:pointer}
+.lbtn small{display:block;color:var(--mute);font-weight:400;font-size:12px;font-family:var(--mono)}
+.lbtn.done{border-color:var(--good);background:#0f2a1f}
+.lbtn.disp{border-color:var(--warn);background:#2a1f05}
+.lbtn:disabled{opacity:.6;cursor:default}
+.arr{margin-top:8px}
+.btn{display:inline-block;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:10px 14px;font:600 15px inherit;font-family:inherit;cursor:pointer;min-height:44px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.full{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text],input[type=number],input[type=time],textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:16px inherit;font-family:inherit;width:100%}
+input[type=time]{font-family:var(--mono);font-size:20px}
+textarea{font-family:var(--mono);font-size:12px;min-height:90px}
+label{display:block;font-size:13px;color:var(--mute);margin:8px 0 4px}
+.teamrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.teamrow input[type=number]{width:64px}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(92vw,380px)}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog h3{margin:0 0 4px}
+.err{color:var(--bad);font-size:14px;margin-top:8px;min-height:1px}
+.rules h3{color:var(--accent);margin:18px 0 6px;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.rules ul{margin:0;padding-left:20px} .rules li{margin:3px 0}
+code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-radius:5px}
+.curve{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:6px}
+.curve div{background:var(--panel2);border-radius:8px;padding:6px 8px;font-size:13px}
+.curve b{font-family:var(--mono);display:block}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;z-index:20}
+.toast[hidden]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>Manhunt <span>Purdue</span></h1>
+    <span class="badge" id="modeBadge">Scorekeeper</span>
+  </div>
+  <div class="clock">
+    <div class="time" id="clock">--:--:--</div>
+    <div class="phase"><b id="phase">&nbsp;</b><span id="phaseSub">&nbsp;</span></div>
+  </div>
+</header>
+<div class="banner" id="photoBanner" hidden></div>
+<div class="banner red" id="returnBanner" hidden></div>
+
+<nav role="tablist">
+  <button role="tab" data-tab="board" aria-selected="true">Scoreboard</button>
+  <button role="tab" data-tab="log" aria-selected="false">Log</button>
+  <button role="tab" data-tab="rules" aria-selected="false">Rules</button>
+  <button role="tab" data-tab="setup" aria-selected="false">Setup</button>
+</nav>
+
+<main>
+  <section id="tab-board"><div id="board"></div></section>
+  <section id="tab-log" hidden><div id="logList"></div></section>
+
+  <section id="tab-rules" class="rules" hidden>
+    <div class="card">
+      <h3 style="margin-top:0">The game</h3>
+      <ul>
+        <li>7:45 PM to 9:00 PM. Four leaders (Kevin, Owen, Gabe, Jack) each roam an assigned quadrant of the ~92-acre campus game area.</li>
+        <li>Capture as many leaders as possible, as quickly as possible. Chase them in any order and switch targets any time.</li>
+        <li>Leaders send a photo of their location every 5 minutes and may keep moving.</li>
+      </ul>
+      <h3>Capturing</h3>
+      <ul>
+        <li>Touch the leader and receive their codeword.</li>
+        <li>A majority of your team must be within arm's reach (5 people needs 3).</li>
+        <li>Each leader can be captured once per team, and stays active for other teams.</li>
+        <li>Your timer resets the instant you receive the correct codeword.</li>
+      </ul>
+      <h3>Movement</h3>
+      <ul>
+        <li>No sharing information or collaborating with other teams.</li>
+        <li>Stay together. The whole team must be in the same quadrant at all times.</li>
+        <li>You can spread out within a quadrant, but a majority must converge for a capture.</li>
+        <li>Walking and running only. No bikes, scooters, cars.</li>
+      </ul>
+      <h3>Endgame</h3>
+      <ul>
+        <li>At 8:55 PM all leaders head back to Newman Hall and remain capturable.</li>
+        <li>A leader is safe once they cross the designated street in front of St. Thomas Aquinas / Newman.</li>
+        <li>Be back at Newman Hall by 9:00 PM. Every second late costs 2 points.</li>
+      </ul>
+      <h3>Scoring</h3>
+      <p>Scoring is based on the time <em>between</em> captures, not the clock time. The first interval starts at 7:45 PM and each capture resets it. Leader identity does not matter.</p>
+      <p><code>Capture = 6,000,000 / (600 + seconds since previous capture)</code>, rounded.</p>
+      <p><code>Final = sum of captures + 1,000 if all four caught − 2 × seconds late</code></p>
+      <div class="curve" id="curve"></div>
+      <p class="sub">Three fast captures can beat four slow ones. Every capture is always worth something, so keep hunting.</p>
+    </div>
+  </section>
+
+  <section id="tab-setup" hidden>
+    <div id="setupScorekeeper">
+      <div class="card">
+        <strong>Teams</strong>
+        <p class="sub">Name and head count. Majority needed is shown on the team card.</p>
+        <div id="teamEditor"></div>
+        <div class="row">
+          <button class="btn" id="addTeam">+ Add team</button>
+        </div>
+      </div>
+      <div class="card">
+        <strong>Share live results</strong>
+        <p class="sub">Makes a read-only link with the current standings baked in. Re-copy it for updates. Works from the hosted page, not from a local file.</p>
+        <button class="btn full" id="copyShare">Copy spectator link</button>
+      </div>
+      <div class="card">
+        <strong>Backup</strong>
+        <p class="sub">Data is saved in this browser only. Copy a backup now and then.</p>
+        <div class="row">
+          <button class="btn" id="exportBtn">Copy backup</button>
+          <button class="btn" id="importBtn">Restore from text</button>
+        </div>
+        <label for="backupText">Backup text</label>
+        <textarea id="backupText" placeholder="Paste a backup here to restore"></textarea>
+      </div>
+      <div class="card">
+        <strong>Danger zone</strong>
+        <p class="sub">Clears all captures and arrivals but keeps teams.</p>
+        <button class="btn danger" id="resetScores">Reset all scores</button>
+      </div>
+    </div>
+    <div id="setupViewer" class="card" hidden>
+      <p>You are viewing a read-only snapshot.</p>
+      <button class="btn primary" id="exitViewer">Open my own scorekeeper</button>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="dlgForm">
+    <h3 id="dlgTitle"></h3>
+    <div class="sub" id="dlgSub"></div>
+    <label for="dlgTime">Time</label>
+    <input type="time" step="1" id="dlgTime">
+    <label style="display:flex;gap:8px;align-items:center" id="dispLabel"><input type="checkbox" id="dlgDisputed"> Disputed (excluded from score)</label>
+    <div class="err" id="dlgErr"></div>
+    <div class="row" style="margin-top:12px">
+      <button type="button" class="btn primary" id="dlgSave">Save</button>
+      <button type="button" class="btn" id="dlgNow">Use now</button>
+      <button type="button" class="btn danger" id="dlgRemove">Remove</button>
+      <button type="button" class="btn" id="dlgCancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Constants ---------- */
+const LEADERS = ["Kevin","Owen","Gabe","Jack"];
+const START = 19*3600 + 45*60;   // 7:45 PM, seconds since midnight
+const RETURN = 20*3600 + 55*60;  // 8:55 PM
+const END = 21*3600;             // 9:00 PM
+const STORE = "manhunt-v1";
+
+/* ---------- Scoring (pure) ---------- */
+function captureScore(t){ return Math.round(6000000 / (600 + t)); }
+
+function scoreTeam(team){
+  const caps = [];
+  for(const l of LEADERS){
+    const c = team.caps[l];
+    if(c && !c.disputed) caps.push({leader:l, at:c.at});
+  }
+  caps.sort((a,b)=>a.at-b.at);
+  let prev = START, total = 0;
+  const rows = caps.map(c=>{
+    const t = Math.max(0, c.at - prev);
+    const pts = captureScore(t);
+    prev = c.at; total += pts;
+    return {leader:c.leader, at:c.at, t, pts};
+  });
+  const sweep = rows.length === LEADERS.length;
+  const late = team.arrival != null ? Math.max(0, team.arrival - END) : 0;
+  const bonus = sweep ? 1000 : 0;
+  return {rows, bonus, late, penalty:2*late, total: total + bonus - 2*late, count: rows.length};
+}
+
+/* ---------- State ---------- */
+function newTeam(i){
+  return {id: "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:"Team "+i, size:5, caps:{}, arrival:null};
+}
+function defaultState(){
+  return {teams: Array.from({length:8},(_,i)=>newTeam(i+1))};
+}
+let viewer = false;
+let state = load();
+
+function load(){
+  const h = location.hash;
+  if(h.startsWith("#v=")){
+    try{
+      const s = JSON.parse(decodeURIComponent(escape(atob(h.slice(3)))));
+      if(s && Array.isArray(s.teams)){ viewer = true; return s; }
+    }catch(e){}
+  }
+  try{
+    const raw = localStorage.getItem(STORE);
+    if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.teams)) return s; }
+  }catch(e){}
+  return defaultState();
+}
+function save(){
+  if(viewer) return;
+  try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){ toast("Could not save (storage blocked)"); }
+}
+
+/* ---------- Formatting ---------- */
+const pad = n => String(n).padStart(2,"0");
+function fmtClock(s){ // seconds since midnight -> 7:45:03 PM
+  const h = Math.floor(s/3600)%24, m = Math.floor(s%3600/60), sec = Math.floor(s%60);
+  const h12 = h%12 || 12;
+  return h12+":"+pad(m)+":"+pad(sec)+" "+(h>=12?"PM":"AM");
+}
+function fmtInput(s){ return pad(Math.floor(s/3600)%24)+":"+pad(Math.floor(s%3600/60))+":"+pad(Math.floor(s%60)); }
+function parseInput(v){
+  if(!v) return null;
+  const p = v.split(":").map(Number);
+  if(p.length<2 || p.some(isNaN)) return null;
+  return p[0]*3600 + p[1]*60 + (p[2]||0);
+}
+function fmtDur(s){
+  s = Math.max(0, Math.round(s));
+  const m = Math.floor(s/60), sec = s%60;
+  return m+":"+pad(sec);
+}
+function fmtPts(n){ return n.toLocaleString("en-US"); }
+function nowSecs(){
+  const d = new Date();
+  return d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------- Rendering ---------- */
+function ranked(){
+  return state.teams.map(t=>({t, s:scoreTeam(t)}))
+    .sort((a,b)=> b.s.total-a.s.total || b.s.count-a.s.count || a.t.name.localeCompare(b.t.name));
+}
+function majority(size){ return Math.floor(size/2)+1; }
+
+function renderBoard(){
+  const list = ranked();
+  const html = list.map(({t,s},i)=>{
+    const dots = LEADERS.map(l=>`<span class="dot ${t.caps[l]&&!t.caps[l].disputed?"on":""}"></span>`).join("");
+    const rows = s.rows.map(r=>`<tr><td>${esc(r.leader)}</td><td>${fmtClock(r.at)}</td><td class="n">${fmtDur(r.t)}</td><td class="n pos-c">+${fmtPts(r.pts)}</td></tr>`).join("");
+    const extras = (s.bonus?`<tr><td colspan="3">All-four bonus</td><td class="n pos-c">+${fmtPts(s.bonus)}</td></tr>`:"")
+      + (s.late?`<tr><td colspan="3">Late ${s.late}s</td><td class="n neg">−${fmtPts(s.penalty)}</td></tr>`:"");
+    const detail = (rows||extras) ? `<details><summary>Breakdown</summary><table><tr><th>Leader</th><th>Time</th><th class="n">Gap</th><th class="n">Pts</th></tr>${rows}${extras}</table></details>` : "";
+    const prog = s.rows.length ? s.rows.map(r=>esc(r.leader)).join(" → ") : "No captures yet";
+    const arr = t.arrival!=null ? ` · Newman ${fmtClock(t.arrival)}` : "";
+    return `<div class="card"><div class="rank"><div class="pos">${i+1}</div><div class="name">${esc(t.name)}<div class="sub">${s.count}/4 captured · ${esc(prog)}${arr}</div></div><div class="score ${s.total<0?"neg":""}">${fmtPts(s.total)}</div></div><div class="dots">${dots}</div>${detail}</div>`;
+  }).join("");
+  document.getElementById("board").innerHTML = html || '<p class="sub">No teams yet. Add some in Setup.</p>';
+}
+
+function renderLog(){
+  const el = document.getElementById("logList");
+  const html = ranked().sort((a,b)=>a.t.name.localeCompare(b.t.name,undefined,{numeric:true})).map(({t,s})=>{
+    const btns = LEADERS.map(l=>{
+      const c = t.caps[l];
+      const cls = c ? (c.disputed?"disp":"done") : "";
+      const sub = c ? fmtClock(c.at)+(c.disputed?" · disputed":"") : "Not captured";
+      return `<button class="lbtn ${cls}" data-team="${t.id}" data-leader="${l}" ${viewer?"disabled":""}>${l}<small>${sub}</small></button>`;
+    }).join("");
+    const arr = t.arrival!=null
+      ? `Arrived ${fmtClock(t.arrival)}${s.late?` (${s.late}s late, −${s.penalty})`:" (on time)"}`
+      : "Not back at Newman";
+    return `<div class="card"><div class="rank"><div class="name">${esc(t.name)}<div class="sub">${t.size} players · need ${majority(t.size)} at a capture</div></div><div class="score">${fmtPts(s.total)}</div></div>
+      <div class="leaders">${btns}</div>
+      <div class="arr"><button class="btn full" data-arrive="${t.id}" ${viewer?"disabled":""}>${arr}</button></div></div>`;
+  }).join("");
+  el.innerHTML = html || '<p class="sub">No teams yet.</p>';
+}
+
+function renderSetup(){
+  document.getElementById("setupScorekeeper").hidden = viewer;
+  document.getElementById("setupViewer").hidden = !viewer;
+  if(viewer) return;
+  document.getElementById("teamEditor").innerHTML = state.teams.map(t=>
+    `<div class="teamrow"><input type="text" value="${esc(t.name)}" data-name="${t.id}" aria-label="Team name"><input type="number" min="1" max="30" value="${t.size}" data-size="${t.id}" aria-label="Team size"><button class="btn danger" data-del="${t.id}" aria-label="Remove team">✕</button></div>`
+  ).join("");
+}
+
+function renderAll(){ renderBoard(); renderLog(); renderSetup(); }
+
+function renderCurve(){
+  const mins = [0,2,5,10,15,20,30,45,60,75];
+  document.getElementById("curve").innerHTML = mins.map(m=>`<div>${m} min<b>${fmtPts(captureScore(m*60))}</b></div>`).join("");
+}
+
+/* ---------- Clock ---------- */
+function tick(){
+  const n = nowSecs();
+  document.getElementById("clock").textContent = fmtClock(n);
+  const ph = document.getElementById("phase"), sub = document.getElementById("phaseSub");
+  const badge = document.getElementById("modeBadge");
+  const photo = document.getElementById("photoBanner"), ret = document.getElementById("returnBanner");
+  let live = false;
+  if(n < START){ ph.textContent = "Starts in "+fmtDur(START-n); sub.textContent = "7:45 PM start"; }
+  else if(n < END){
+    live = true;
+    ph.textContent = fmtDur(END-n)+" left";
+    sub.textContent = n>=RETURN ? "Return to Newman" : "Hunt in progress";
+  } else { ph.textContent = "Game over"; sub.textContent = fmtClock(END)+" ended"; }
+
+  photo.hidden = true;
+  if(live && n < RETURN){
+    const sinceStart = n - START;
+    const toNext = 300 - (sinceStart % 300);
+    if(toNext <= 20 || sinceStart % 300 < 15){
+      photo.hidden = false;
+      photo.textContent = toNext <= 20 ? "Leader photos due in "+toNext+"s" : "Leader photo check-in now";
+    }
+  }
+  ret.hidden = !(live && n >= RETURN);
+  if(!ret.hidden) ret.textContent = "Leaders heading to Newman. Teams: be back by 9:00 PM. "+fmtDur(END-n)+" left.";
+
+  if(viewer){ badge.textContent = "Spectator"; badge.className = "badge view"; }
+  else if(live){ badge.textContent = "Live"; badge.className = "badge live"; }
+  else { badge.textContent = "Scorekeeper"; badge.className = "badge"; }
+}
+
+/* ---------- Dialog ---------- */
+const dlg = document.getElementById("dlg");
+let dlgCtx = null;
+function openDlg(ctx){
+  dlgCtx = ctx;
+  const team = state.teams.find(t=>t.id===ctx.team);
+  document.getElementById("dlgTitle").textContent = ctx.kind==="cap" ? `${team.name}: ${ctx.leader}` : `${team.name}: Newman arrival`;
+  const existing = ctx.kind==="cap" ? team.caps[ctx.leader] : (team.arrival!=null?{at:team.arrival}:null);
+  document.getElementById("dlgSub").textContent = ctx.kind==="cap"
+    ? (existing ? "Edit this capture." : "Record a capture. Needs "+majority(team.size)+" of "+team.size+" players present.")
+    : (existing ? "Edit arrival time." : "Record arrival at Newman Hall.");
+  document.getElementById("dlgTime").value = fmtInput(existing ? existing.at : nowSecs());
+  document.getElementById("dlgDisputed").checked = !!(existing && existing.disputed);
+  document.getElementById("dispLabel").hidden = ctx.kind!=="cap";
+  document.getElementById("dlgRemove").hidden = !existing;
+  document.getElementById("dlgErr").textContent = "";
+  ctx.warned = false;
+  dlg.showModal();
+}
+function saveDlg(at){
+  const err = document.getElementById("dlgErr");
+  if(at==null){ err.textContent = "Enter a valid time."; return; }
+  const team = state.teams.find(t=>t.id===dlgCtx.team);
+  if(dlgCtx.kind==="cap"){
+    if(at < START){ err.textContent = "Before 7:45 PM start. Not allowed."; return; }
+    if(at > END && !dlgCtx.warned){ err.textContent = "That's after 9:00 PM. Tap Save again to confirm."; dlgCtx.warned = true; return; }
+    team.caps[dlgCtx.leader] = {at, disputed: document.getElementById("dlgDisputed").checked};
+  } else {
+    team.arrival = at;
+  }
+  save(); dlg.close(); renderAll();
+}
+document.getElementById("dlgSave").onclick = ()=> saveDlg(parseInput(document.getElementById("dlgTime").value));
+document.getElementById("dlgNow").onclick = ()=>{ document.getElementById("dlgTime").value = fmtInput(nowSecs()); dlgCtx.warned = false; };
+document.getElementById("dlgCancel").onclick = ()=> dlg.close();
+document.getElementById("dlgRemove").onclick = ()=>{
+  const team = state.teams.find(t=>t.id===dlgCtx.team);
+  if(dlgCtx.kind==="cap") delete team.caps[dlgCtx.leader]; else team.arrival = null;
+  save(); dlg.close(); renderAll(); toast("Removed");
+};
+
+/* ---------- Events ---------- */
+document.getElementById("logList").addEventListener("click", e=>{
+  if(viewer) return;
+  const lb = e.target.closest("[data-leader]");
+  if(lb) return openDlg({kind:"cap", team:lb.dataset.team, leader:lb.dataset.leader});
+  const ab = e.target.closest("[data-arrive]");
+  if(ab) openDlg({kind:"arr", team:ab.dataset.arrive});
+});
+
+document.querySelectorAll("nav button").forEach(b=> b.onclick = ()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected", x===b));
+  ["board","log","rules","setup"].forEach(k=> document.getElementById("tab-"+k).hidden = (k!==b.dataset.tab));
+  window.scrollTo(0,0);
+});
+
+const teamEditor = document.getElementById("teamEditor");
+teamEditor.addEventListener("input", e=>{
+  const t = id => state.teams.find(x=>x.id===id);
+  if(e.target.dataset.name){ t(e.target.dataset.name).name = e.target.value || "Team"; }
+  else if(e.target.dataset.size){ t(e.target.dataset.size).size = Math.max(1, parseInt(e.target.value)||1); }
+  else return;
+  save(); renderBoard(); renderLog();
+});
+teamEditor.addEventListener("click", e=>{
+  const d = e.target.closest("[data-del]");
+  if(!d) return;
+  const team = state.teams.find(t=>t.id===d.dataset.del);
+  if(!confirm(`Remove ${team.name} and all its captures?`)) return;
+  state.teams = state.teams.filter(t=>t!==team);
+  save(); renderAll();
+});
+document.getElementById("addTeam").onclick = ()=>{ state.teams.push(newTeam(state.teams.length+1)); save(); renderAll(); };
+
+document.getElementById("resetScores").onclick = ()=>{
+  if(!confirm("Clear ALL captures and arrival times?")) return;
+  state.teams.forEach(t=>{ t.caps = {}; t.arrival = null; });
+  save(); renderAll(); toast("Scores reset");
+};
+
+async function copyText(text, okMsg){
+  try{ await navigator.clipboard.writeText(text); toast(okMsg); return true; }
+  catch(e){ return false; }
+}
+document.getElementById("exportBtn").onclick = async ()=>{
+  const text = JSON.stringify(state);
+  const ta = document.getElementById("backupText");
+  ta.value = text;
+  if(!(await copyText(text, "Backup copied"))){ ta.select(); toast("Copy it from the box"); }
+};
+document.getElementById("importBtn").onclick = ()=>{
+  try{
+    const s = JSON.parse(document.getElementById("backupText").value);
+    if(!s || !Array.isArray(s.teams)) throw 0;
+    if(!confirm("Replace current data with this backup?")) return;
+    state = s; save(); renderAll(); toast("Restored");
+  }catch(e){ toast("That doesn't look like a valid backup"); }
+};
+document.getElementById("copyShare").onclick = async ()=>{
+  const enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  const url = location.href.split("#")[0] + "#v=" + enc;
+  if(!(await copyText(url, "Spectator link copied"))){
+    const ta = document.getElementById("backupText"); ta.value = url; ta.select(); toast("Copy the link from the box");
+  }
+};
+document.getElementById("exitViewer").onclick = ()=>{
+  location.href = location.href.split("#")[0]; location.reload();
+};
+
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=> el.hidden = true, 2200);
+}
+
+/* ---------- Init ---------- */
+renderCurve(); renderAll(); tick();
+setInterval(tick, 1000);
+window.addEventListener("storage", e=>{ if(e.key===STORE && !viewer){ state = load(); renderAll(); } });
+window.addEventListener("hashchange", ()=> location.reload());
+
+/* Self-check of the worked examples from the rules (visible in console) */
+(function(){
+  const mk = (arr)=>({caps:Object.fromEntries(arr.map((s,i)=>[LEADERS[i],{at:s}])),arrival:null});
+  let a = START, b = [];
+  [240,300,360].forEach(g=>{a+=g;b.push(a);});
+  const s3 = scoreTeam(mk(b)).total;
+  a = START; b = [];
+  [600,600,720,900].forEach(g=>{a+=g;b.push(a);});
+  const s4 = scoreTeam(mk(b)).total;
+  console.log("self-check:", s3, "(expect ~20060)", s4, "(expect ~19545)");
+})();
+})();
+</script>
+</body>
+</html>
