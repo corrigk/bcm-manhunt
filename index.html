@@ -76,6 +76,22 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 .curve{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:6px}
 .curve div{background:var(--panel2);border-radius:8px;padding:6px 8px;font-size:13px}
 .curve b{font-family:var(--mono);display:block}
+#cd{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(circle at 50% 40%,#1c2230,#07090c 70%);transition:background .1s}
+#cd[hidden]{display:none}
+#cd .lbl{letter-spacing:.3em;text-transform:uppercase;color:var(--mute);font-size:14px}
+#cd .num{font:800 clamp(64px,22vw,200px)/1 var(--mono);color:var(--accent);margin:12px 0;font-variant-numeric:tabular-nums}
+#cd .msg{font-size:clamp(16px,4vw,24px);min-height:2.6em;color:var(--text)}
+#cd .row{justify-content:center;margin-top:18px}
+#cd.crazy{animation:shake .12s infinite}
+#cd.crazy.c0{background:radial-gradient(circle,#6a0f0f,#1a0000 75%)}
+#cd.crazy.c1{background:radial-gradient(circle,#7a5300,#1a0f00 75%)}
+#cd.crazy .num{font-size:clamp(140px,55vw,420px);color:#fff;text-shadow:0 0 30px var(--bad),0 0 80px var(--accent)}
+#cd.crazy .num.pop{animation:pop .9s ease-out}
+#cd.go{background:radial-gradient(circle,#0e5c3a,#021a10 75%)}
+#cd.go .num{font-size:clamp(120px,48vw,380px);color:#fff;text-shadow:0 0 40px var(--good);animation:pop .8s ease-out}
+@keyframes pop{0%{transform:scale(2.4);opacity:0}25%{opacity:1}100%{transform:scale(1)}}
+@keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(-5px,4px)}50%{transform:translate(5px,-4px)}75%{transform:translate(-4px,-5px)}100%{transform:translate(4px,5px)}}
+@media (prefers-reduced-motion:reduce){#cd.crazy{animation:none}#cd.crazy .num.pop,#cd.go .num{animation:none}}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;z-index:20}
 .toast[hidden]{display:none}
 </style>
@@ -196,6 +212,17 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
     </div>
   </form>
 </dialog>
+<div id="cd" hidden>
+  <div>
+    <div class="lbl" id="cdLbl"></div>
+    <div class="num" id="cdNum"></div>
+    <div class="msg" id="cdMsg"></div>
+    <div class="row">
+      <button class="btn" id="cdSound">🔇 Sound off</button>
+      <button class="btn" id="cdHide">Hide</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -491,6 +518,71 @@ function toast(msg){
   el.textContent = msg; el.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(()=> el.hidden = true, 2200);
 }
+
+/* ---------- Start countdown ----------
+   Big pre-game countdown. Add ?demo=15 to the URL to rehearse a 15-second run. */
+const demo = parseInt(new URLSearchParams(location.search).get("demo"));
+const GO_AT = demo > 0 ? Date.now() + demo*1000 : (()=>{ const d = new Date(); d.setHours(19,45,0,0); return d.getTime(); })();
+const cd = document.getElementById("cd"), cdNum = document.getElementById("cdNum");
+let cdHidden = false, soundOn = false, lastSec = null, actx = null;
+
+function beep(freq, dur, type){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "square"; o.frequency.value = freq; g.gain.value = .15;
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
+  }catch(e){}
+}
+function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+
+function cdUpdate(){
+  const ms = GO_AT - Date.now();
+  if(ms < -8000){ cd.hidden = true; return; }       // GO message is over (or page opened late)
+  const sec = Math.ceil(ms/1000);
+  const crazy = ms > 0 && sec <= 10, go = ms <= 0;
+  if(!crazy && !go && cdHidden){ cd.hidden = true; return; }
+  cd.hidden = false;
+  const changed = sec !== lastSec; lastSec = sec;
+
+  if(go){
+    if(changed || !cd.classList.contains("go")){
+      cd.className = "go";
+      document.getElementById("cdLbl").textContent = "Manhunt has begun";
+      cdNum.textContent = "GO!";
+      document.getElementById("cdMsg").textContent = "Hunt the leaders. Stay together. Be back at Newman Hall by 9:00 PM.";
+      document.getElementById("cdHide").textContent = "Let's go";
+      beep(1200, .9, "sawtooth"); buzz([400,100,400,100,600]);
+    }
+    return;
+  }
+  document.getElementById("cdHide").textContent = "Hide";
+  if(crazy){
+    cd.className = "crazy c"+(sec%2);
+    document.getElementById("cdLbl").textContent = "Get ready";
+    document.getElementById("cdMsg").textContent = sec<=3 ? "RUN!!!" : "Spread out. Be ready to move.";
+    if(changed){
+      cdNum.textContent = sec;
+      cdNum.classList.remove("pop"); void cdNum.offsetWidth; cdNum.classList.add("pop");
+      beep(380 + (10-sec)*70, sec<=3 ? .25 : .12);
+      buzz(sec<=3 ? 250 : 80);
+    }
+    return;
+  }
+  cd.className = "";
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+  document.getElementById("cdLbl").textContent = "Manhunt begins at 7:45 PM";
+  cdNum.textContent = h ? h+":"+pad(m)+":"+pad(s) : m+":"+pad(s);
+  document.getElementById("cdMsg").textContent = "Meet up with your team. Check the Rules tab while you wait.";
+}
+document.getElementById("cdHide").onclick = ()=>{ cdHidden = true; cd.hidden = true; };
+document.getElementById("cdSound").onclick = e=>{
+  soundOn = !soundOn;
+  e.target.textContent = soundOn ? "🔊 Sound on" : "🔇 Sound off";
+  if(soundOn) beep(660,.1);
+};
+setInterval(cdUpdate, 100);
 
 /* ---------- Init ---------- */
 renderCurve(); renderAll(); tick();
