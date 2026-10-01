@@ -138,6 +138,7 @@ code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-rad
 .who{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
 .who .btn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 input[type=file]{display:none}
+select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:16px inherit;font-family:inherit;width:100%}
 #imgDlg{width:min(96vw,720px);padding:8px}
 #imgDlg img{width:100%;max-height:80vh;object-fit:contain;display:block;border-radius:8px}
 
@@ -249,10 +250,10 @@ input[type=file]{display:none}
       </ul>
       <h3>Capturing</h3>
       <ul>
-        <li>Touch the leader and receive their codeword.</li>
+        <li>Touch the leader and tell them your team name. The leader logs your capture on the site.</li>
         <li>A majority of your team must be within arm's reach (5 people needs 3).</li>
         <li>Each leader can be captured once per team, and stays active for other teams.</li>
-        <li>Your timer resets the instant you receive the correct codeword.</li>
+        <li>Your timer resets the instant the leader logs your capture.</li>
       </ul>
       <h3>Movement</h3>
       <ul>
@@ -305,13 +306,28 @@ input[type=file]{display:none}
       <div class="sub" id="sendStatus" style="margin-top:6px"></div>
       <button class="btn" id="lLock" style="margin-top:10px">Lock</button>
     </div>
+    <div class="card" id="capCard" hidden>
+      <strong>A team caught you?</strong>
+      <div class="sub">Ask for their team name, make sure a majority is within arm's reach, then log it. Pick your name above first.</div>
+      <label for="capTeam">Team</label>
+      <select id="capTeam"></select>
+      <label for="capAgo">When</label>
+      <select id="capAgo">
+        <option value="0">Just now</option>
+        <option value="60">About 1 min ago</option>
+        <option value="120">About 2 min ago</option>
+        <option value="300">About 5 min ago</option>
+      </select>
+      <button class="btn primary full" id="capBtn" style="margin-top:10px">Log capture</button>
+      <div class="sub" id="capStatus" style="margin-top:6px"></div>
+    </div>
     <div class="card">
       <strong>Leader reminders</strong>
       <ul class="sub" style="margin:8px 0 0;padding-left:20px">
         <li>A photo every 5 minutes. You may keep moving afterward.</li>
         <li>At 8:55 PM start heading back toward Newman Hall. You are safe once you cross the street in front of St. Thomas Aquinas / Newman.</li>
-        <li>A capture needs a majority of the team within arm's reach. Only give your codeword after you are touched.</li>
-        <li>Text the scorekeeper each time you are captured: team and time.</li>
+        <li>A capture needs a majority of the team within arm's reach. Ask for the team name, then log the capture above right away.</li>
+        <li>Logged by mistake? Tell the scorekeeper and they will fix it.</li>
       </ul>
     </div>
   </section>
@@ -500,11 +516,20 @@ function showSync(){
   el.textContent = syncErr ? "Offline. Changes will retry automatically." : dirty ? "Saving…" : lastSync ? "Synced "+fmtClock(lastSync) : "";
   $("liveNote").textContent = lastSync && !keeperActive() ? "Live standings · updated "+fmtClock(lastSync) : "";
 }
-async function pull(){
-  if(!REMOTE || viewer || keeperActive()) return;
+let haveServer = false;   // true once we have loaded the real team list from the server
+let baseAt = null;   // server timestamp (raw string) of the standings this device last saw
+async function pull(force){
+  if(!REMOTE || viewer) return;
+  if(keeperActive() && !force && (dirty || pushing)) return;   // never clobber unsaved scorekeeper edits
   try{
-    const j = await sb("/rest/v1/manhunt_state?id=eq.1&select=state");
-    if(j && j[0] && j[0].state && Array.isArray(j[0].state.teams) && j[0].state.teams.length){ state = j[0].state; renderBoard(); }
+    const j = await sb("/rest/v1/manhunt_state?id=eq.1&select=state,updated_at");
+    const row = j && j[0];
+    if(row && row.state && Array.isArray(row.state.teams) && row.state.teams.length) haveServer = true;
+    if(row && row.state && Array.isArray(row.state.teams) && row.state.teams.length && (force || row.updated_at !== baseAt)){
+      state = row.state; baseAt = row.updated_at;
+      renderBoard(); renderLeaderTeams();
+      if(keeperActive()){ renderLog(); renderSetup(); }
+    }
     lastSync = nowSecs(); syncErr = false;
   }catch(e){ syncErr = true; }
   showSync();
@@ -519,9 +544,17 @@ async function push(){
   pushing = true;
   const snapshot = JSON.stringify(state); dirty = false;
   try{
-    await sb("/rest/v1/rpc/manhunt_save", {pw: keeperPw, new_state: JSON.parse(snapshot)});
+    baseAt = await sb("/rest/v1/rpc/manhunt_save", {pw: keeperPw, new_state: JSON.parse(snapshot), base_at: baseAt});
     lastSync = nowSecs(); syncErr = false;
-  }catch(e){ dirty = true; syncErr = true; }
+  }catch(e){
+    if(/stale/.test(e.message)){   // a leader logged a capture since we last looked
+      pushing = false; dirty = false;
+      await pull(true); renderAll();
+      toast("A leader just logged a capture. Your last edit wasn't saved, so please redo it.");
+      return;
+    }
+    dirty = true; syncErr = true;
+  }
   pushing = false; showSync();
   if(dirty) pushTimer = setTimeout(push, 5000);
 }
@@ -649,7 +682,8 @@ async function tryUnlock(){
   if(REMOTE){
     keeperPw = pw; try{ sessionStorage.setItem("mh-pw", pw); }catch(e){}
     try{   // adopt the server's standings if there are any; otherwise publish this device's
-      const j = await sb("/rest/v1/manhunt_state?id=eq.1&select=state");
+      const j = await sb("/rest/v1/manhunt_state?id=eq.1&select=state,updated_at");
+      baseAt = j && j[0] ? j[0].updated_at : null;
       if(j && j[0] && j[0].state && j[0].state.teams && j[0].state.teams.length){ state = j[0].state; renderAll(); }
       else { dirty = true; push(); }
     }catch(e){}
@@ -892,12 +926,43 @@ function renderWho(){
   $("who").innerHTML = LEADERS.map(l=>`<button class="btn" data-who="${l}" aria-pressed="${l===myLeader}">${l}</button>`).join("");
 }
 function applyLeaderGate(){
-  $("lgate").hidden = !!lpw; $("lform").hidden = !lpw;
+  $("lgate").hidden = !!lpw; $("lform").hidden = !lpw; $("capCard").hidden = !lpw;
+  renderLeaderTeams();
 }
+function renderLeaderTeams(){
+  const sel = $("capTeam"); if(!sel) return;
+  const keep = sel.value;
+  if(!haveServer){ sel.innerHTML = '<option value="">Loading teams…</option>'; return; }
+  sel.innerHTML = '<option value="">Choose a team…</option>' + state.teams.map(t=>{
+    const done = myLeader && t.caps[myLeader];
+    return `<option value="${esc(t.id)}" ${done?"disabled":""}>${esc(t.name)}${done?" (already caught you)":""}</option>`;
+  }).join("");
+  if(keep) sel.value = keep;
+}
+$("capBtn").onclick = async ()=>{
+  const st = $("capStatus"), btn = $("capBtn");
+  const teamId = $("capTeam").value, team = state.teams.find(t=>t.id===teamId);
+  if(!myLeader){ st.textContent = "Pick your name first."; return; }
+  if(!team){ st.textContent = "Choose the team."; return; }
+  if(Date.now() < GO_AT){ st.textContent = "The hunt hasn't started yet."; return; }
+  if(!confirm(`Log ${team.name} as having captured ${myLeader}?`)) return;
+  btn.disabled = true; st.textContent = "Logging…";
+  try{
+    await sb("/rest/v1/rpc/manhunt_capture", {pw: lpw, p_team: team.id, p_leader: myLeader, p_ago: parseInt($("capAgo").value)||0});
+    st.textContent = team.name + " caught " + myLeader + " at " + fmtClock(nowSecs()) + ".";
+    toast("Capture logged"); $("capTeam").value = ""; $("capAgo").value = "0";
+    await pull(true);
+  }catch(e){
+    if(/already captured/.test(e.message)){ st.textContent = team.name + " already caught " + myLeader + "."; pull(true); }
+    else if(/bad password/.test(e.message)){ lpw = ""; try{ sessionStorage.removeItem("mh-lpw"); }catch(x){} applyLeaderGate(); }
+    else st.textContent = "Didn't save. Check your signal and try again.";
+  }
+  btn.disabled = false;
+};
 $("who").addEventListener("click", e=>{
   const b = e.target.closest("[data-who]"); if(!b) return;
   myLeader = b.dataset.who; try{ localStorage.setItem("mh-leader", myLeader); }catch(err){}
-  renderWho();
+  renderWho(); renderLeaderTeams();
 });
 async function leaderUnlock(){
   const pw = $("lpw").value.trim();
